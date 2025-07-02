@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Building2, UserPlus, Settings, CheckCircle } from "lucide-react"
 
 export interface Activity {
-  id: string
+  id: string | number
   type: string
   title: string
   description: string
