@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useState } from "react"
 import { CardDescription } from "@/components/ui/card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,37 +8,43 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
-import { fetchRoles, setFilters } from "@/lib/features/role/role-slice"
-import { fetchTenants } from "@/lib/features/tenant/tenant-slice"
+import { useAppDispatch  } from "@/lib/hooks/redux-hooks"
+import { useGetRolesQuery, useDeleteRoleMutation } from "@/lib/services/role-api-service"
+import { useGetTenantsQuery } from "@/lib/services/tenant-api-service"
 import { Search, Shield, Users, Settings, Eye, Edit, Trash2, MoreHorizontal, Building2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
+import type { RoleFilters } from "@/lib/types/role"
 
 export default function RolesPage() {
   const dispatch = useAppDispatch()
-  const { roles, loading, error, filters } = useAppSelector((state) => state.role)
-  const { tenants } = useAppSelector((state) => state.tenant)
   const router = useRouter()
 
-  useEffect(() => {
-    dispatch(fetchRoles(filters))
-  }, [dispatch, filters])
-
-  useEffect(() => {
-    dispatch(fetchTenants())
-  }, [dispatch])
+  const [filters, setFilters] = useState<RoleFilters>({})
+  const { data: rolesResponse, isLoading: loading, error } = useGetRolesQuery(filters)
+  const { data: tenantsResponse } = useGetTenantsQuery()
+  const [deleteRole] = useDeleteRoleMutation()
 
   const handleSearchChange = (search: string) => {
-    dispatch(setFilters({ ...filters, search }))
+    setFilters({ ...filters, search })
   }
 
   const handleStatusFilter = (status: string) => {
-    dispatch(setFilters({ ...filters, status: status === "all" ? undefined : (status as any) }))
+    setFilters({ ...filters, status: status === "all" ? undefined : (status as any) })
   }
 
   const handleTenantFilter = (tenantId: string) => {
-    dispatch(setFilters({ ...filters, tenant_id: tenantId === "all" ? undefined : tenantId }))
+    setFilters({ ...filters, tenant_id: tenantId === "all" ? undefined : tenantId })
+  }
+
+  const handleDeleteRole = async (id: string) => {
+    try {
+      await deleteRole(id).unwrap()
+      // Optionally show a success toast
+    } catch (err) {
+      // Optionally show an error toast
+      console.error("Failed to delete the role: ", err)
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -115,7 +121,7 @@ export default function RolesPage() {
   if (error) {
     return (
       <div className="flex-1 space-y-6 p-6">
-        <div className="text-center text-red-600">Error: {error}</div>
+        <div className="text-center text-red-600">Error fetching roles. Please try again.</div>
       </div>
     )
   }
@@ -153,7 +159,7 @@ export default function RolesPage() {
               <SelectContent>
                 <SelectItem value="all">All Tenants</SelectItem>
                 <SelectItem value="global">Global Roles</SelectItem>
-                {tenants.map((tenant) => (
+                {tenantsResponse?.data.map((tenant) => (
                   <SelectItem key={tenant.id} value={tenant.id}>
                     {tenant.tenant_name}
                   </SelectItem>
@@ -176,7 +182,7 @@ export default function RolesPage() {
 
       {/* Roles Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {roles.map((role) => (
+        {rolesResponse?.data.map((role) => (
           <Card
             key={role.id}
             className="group hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-800/50 h-full flex flex-col cursor-pointer"
@@ -226,7 +232,10 @@ export default function RolesPage() {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="cursor-pointer text-red-600 focus:text-red-600"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteRole(role.id)
+                        }}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete Role
@@ -336,7 +345,7 @@ export default function RolesPage() {
         ))}
       </div>
 
-      {roles.length === 0 && (
+      {rolesResponse?.data.length === 0 && (
         <Card className="border-dashed border-2 border-slate-300 dark:border-slate-600">
           <CardContent className="text-center py-16">
             <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">

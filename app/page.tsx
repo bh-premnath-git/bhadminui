@@ -1,21 +1,17 @@
 "use client"
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { RecentActivities,  type Activity  } from "@/components/recent-activities"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
-import { fetchTenants } from "@/lib/features/tenant/tenant-slice"
-import { fetchUsers } from "@/lib/features/user/user-slice"
+import { useGetTenantsQuery } from "@/lib/services/tenant-api-service"
+import { useGetUsersQuery } from "@/lib/services/user-api-service"
 import { Building2, User } from "lucide-react"
 
 export default function HomePage() {
-  const dispatch = useAppDispatch()
-  const { tenants } = useAppSelector((state) => state.tenant)
-  const { users } = useAppSelector((state) => state.user)
+  const { data: tenantsResponse } = useGetTenantsQuery()
+  const { data: usersResponse } = useGetUsersQuery()
 
-  useEffect(() => {
-    dispatch(fetchTenants())
-    dispatch(fetchUsers())
-  }, [dispatch])
+  const tenants = tenantsResponse?.data ?? []
+  const users = usersResponse?.data ?? []
 
   const activeTenants = tenants.filter((t) => t.status === "active").length
   const pendingTenants = tenants.filter((t) => t.status === "pending").length

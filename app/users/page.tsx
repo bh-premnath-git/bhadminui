@@ -1,35 +1,31 @@
 "use client"
 
-import { useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
-import { fetchUsers, setFilters } from "@/lib/features/user/user-slice"
+import { useGetUsersQuery } from "@/lib/services/user-api-service"
 import { Search, Users, Mail, Shield, Calendar, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import type { UserFilters } from "@/lib/types/user"
 
 export default function UsersPage() {
-  const dispatch = useAppDispatch()
-  const { users, loading, error, filters } = useAppSelector((state) => state.user)
+  const [filters, setFilters] = useState<UserFilters>({})
+  const { data: usersResponse, isLoading, error } = useGetUsersQuery(filters)
   const router = useRouter()
 
-  useEffect(() => {
-    dispatch(fetchUsers(filters))
-  }, [dispatch, filters])
-
   const handleSearchChange = (search: string) => {
-    dispatch(setFilters({ ...filters, search }))
+    setFilters({ ...filters, search })
   }
 
   const handleRoleFilter = (role: string) => {
-    dispatch(setFilters({ ...filters, role: role === "all" ? undefined : (role as any) }))
+    setFilters({ ...filters, role: role === "all" ? undefined : (role as any) })
   }
 
   const handleStatusFilter = (status: string) => {
-    dispatch(setFilters({ ...filters, status: status === "all" ? undefined : (status as any) }))
+    setFilters({ ...filters, status: status === "all" ? undefined : (status as any) })
   }
 
   const getRoleColor = (role: string) => {
@@ -72,7 +68,7 @@ export default function UsersPage() {
     router.push(`/users/${userId}`)
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
         <div className="flex-1 space-y-6 p-6">
           <div className="flex items-center justify-center h-64">
@@ -85,7 +81,7 @@ export default function UsersPage() {
   if (error) {
     return (
         <div className="flex-1 space-y-6 p-6">
-          <div className="text-center text-red-600">Error: {error}</div>
+          <div className="text-center text-red-600">Error fetching users. Please try again.</div>
         </div>
     )
   }
@@ -144,7 +140,7 @@ export default function UsersPage() {
 
         {/* Users Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {users.map((user) => (
+          {usersResponse?.data.map((user) => (
             <Card
               key={user.id}
               className="hover:shadow-lg transition-shadow cursor-pointer"
@@ -200,21 +196,13 @@ export default function UsersPage() {
                   <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
                     Edit
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700 bg-transparent"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Delete
-                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {users.length === 0 && (
+        {usersResponse?.data.length === 0 && (
           <Card className="border-dashed border-2 border-slate-300 dark:border-slate-600">
             <CardContent className="text-center py-16">
               <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">

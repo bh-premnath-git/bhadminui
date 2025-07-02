@@ -1,223 +1,194 @@
-import { BaseApiService } from "./base-api-service"
+import { apiService } from "./api-service"
 import type { Role, CreateRoleRequest, UpdateRoleRequest, RoleFilters } from "../types/role"
-import type { ApiResponse, PaginatedResponse } from "../types/api"
+import type { PaginatedResponse } from "../types/api"
 
-class RoleApiService extends BaseApiService<Role, CreateRoleRequest, UpdateRoleRequest, RoleFilters> {
-  constructor() {
-    super("/api/roles")
-  }
+// Dummy data from the original file
+const dummyRoles: Role[] = [
+  {
+    id: "1",
+    name: "Super Admin",
+    description:
+      "Full system access with all permissions including user management, system configuration, and data administration",
+    permissions: ["read", "write", "delete", "admin", "manage_users", "manage_tenants", "system_config"],
+    userCount: 2,
+    status: "active",
+    tenant: null, // Global role
+    createdAt: "2024-01-15T10:00:00Z",
+    updatedAt: "2024-01-15T10:00:00Z",
+  },
+  {
+    id: "2",
+    name: "Tenant Admin",
+    description:
+      "Administrative access within assigned tenants with user management and configuration capabilities",
+    permissions: ["read", "write", "delete", "manage_users", "tenant_config"],
+    userCount: 3,
+    status: "active",
+    tenant: {
+      id: "1",
+      name: "Acme Corporation",
+    },
+    createdAt: "2024-01-16T14:30:00Z",
+    updatedAt: "2024-01-16T14:30:00Z",
+  },
+  {
+    id: "3",
+    name: "User Manager",
+    description: "Specialized role for managing users within tenants with limited administrative privileges",
+    permissions: ["read", "write", "manage_users"],
+    userCount: 2,
+    status: "active",
+    tenant: {
+      id: "2",
+      name: "Global Dynamics",
+    },
+    createdAt: "2024-01-18T09:15:00Z",
+    updatedAt: "2024-01-18T09:15:00Z",
+  },
+  {
+    id: "4",
+    name: "Standard User",
+    description: "Basic user access with read and limited write permissions for standard operations",
+    permissions: ["read", "write"],
+    userCount: 8,
+    status: "active",
+    tenant: {
+      id: "1",
+      name: "Acme Corporation",
+    },
+    createdAt: "2024-01-20T11:45:00Z",
+    updatedAt: "2024-01-20T11:45:00Z",
+  },
+  {
+    id: "5",
+    name: "Project Manager",
+    description: "Project-specific management role with enhanced permissions for project coordination",
+    permissions: ["read", "write", "manage_projects"],
+    userCount: 4,
+    status: "active",
+    tenant: {
+      id: "3",
+      name: "StartupXYZ",
+    },
+    createdAt: "2024-01-22T16:20:00Z",
+    updatedAt: "2024-01-22T16:20:00Z",
+  },
+  {
+    id: "6",
+    name: "Read Only",
+    description: "View-only access for reporting and monitoring purposes without modification capabilities",
+    permissions: ["read"],
+    userCount: 5,
+    status: "active",
+    tenant: {
+      id: "2",
+      name: "Global Dynamics",
+    },
+    createdAt: "2024-01-22T16:20:00Z",
+    updatedAt: "2024-01-22T16:20:00Z",
+  },
+  {
+    id: "7",
+    name: "Guest",
+    description: "Limited temporary access for external users and contractors",
+    permissions: ["read"],
+    userCount: 10,
+    status: "inactive",
+    tenant: null,
+    createdAt: "2024-01-23T09:00:00Z",
+    updatedAt: "2024-01-23T09:00:00Z",
+  },
+]
 
-  async getAll(filters?: RoleFilters): Promise<PaginatedResponse<Role>> {
-    // Simulate API call with dummy data
-    const dummyRoles: Role[] = [
-      {
-        id: "1",
-        name: "Super Admin",
-        description:
-          "Full system access with all permissions including user management, system configuration, and data administration",
-        permissions: ["read", "write", "delete", "admin", "manage_users", "manage_tenants", "system_config"],
-        userCount: 2,
-        status: "active",
-        tenant: null, // Global role
-        createdAt: "2024-01-15T10:00:00Z",
-        updatedAt: "2024-01-15T10:00:00Z",
+export const roleApiSlice = apiService.injectEndpoints({
+  endpoints: (builder) => ({
+    getRoles: builder.query<PaginatedResponse<Role>, RoleFilters | void>({
+      queryFn: async (filters) => {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        let roles = [...dummyRoles]
+        if (filters && 'search' in filters && typeof filters.search === 'string') {
+          const search = filters.search.toLowerCase()
+          roles = roles.filter(
+            (r) => r.name.toLowerCase().includes(search) || r.description.toLowerCase().includes(search),
+          )
+        }
+        const response: PaginatedResponse<Role> = {
+          data: roles,
+          message: "Roles retrieved successfully",
+          success: true,
+          pagination: {
+            page: 1,
+            limit: 10,
+            total: roles.length,
+            totalPages: Math.ceil(roles.length / 10),
+          },
+        }
+        return { data: response }
       },
-      {
-        id: "2",
-        name: "Tenant Admin",
-        description:
-          "Administrative access within assigned tenants with user management and configuration capabilities",
-        permissions: ["read", "write", "delete", "manage_users", "tenant_config"],
-        userCount: 3,
-        status: "active",
-        tenant: {
-          id: "1",
-          name: "Acme Corporation",
-        },
-        createdAt: "2024-01-16T14:30:00Z",
-        updatedAt: "2024-01-16T14:30:00Z",
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.data.map(({ id }) => ({ type: "Role" as const, id })),
+              { type: "Role", id: "LIST" },
+            ]
+          : [{ type: "Role", id: "LIST" }],
+    }),
+    getRoleById: builder.query<Role, string>({
+      queryFn: async (id) => {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        const role = dummyRoles.find((r) => r.id === id)
+        return role ? { data: role } : { error: { status: 404, data: "Role not found" } }
       },
-      {
-        id: "3",
-        name: "User Manager",
-        description: "Specialized role for managing users within tenants with limited administrative privileges",
-        permissions: ["read", "write", "manage_users"],
-        userCount: 2,
-        status: "active",
-        tenant: {
-          id: "2",
-          name: "Global Dynamics",
-        },
-        createdAt: "2024-01-18T09:15:00Z",
-        updatedAt: "2024-01-18T09:15:00Z",
+      providesTags: (_result, _error, id) => [{ type: "Role", id }],
+    }),
+    createRole: builder.mutation<Role, CreateRoleRequest>({
+      queryFn: async (data) => {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        const newRole: Role = {
+          id: Math.random().toString(36).substring(2, 9),
+          ...data,
+          userCount: 0,
+          status: "active",
+          tenant: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+        dummyRoles.push(newRole)
+        return { data: newRole }
       },
-      {
-        id: "4",
-        name: "Standard User",
-        description: "Basic user access with read and limited write permissions for standard operations",
-        permissions: ["read", "write"],
-        userCount: 8,
-        status: "active",
-        tenant: {
-          id: "1",
-          name: "Acme Corporation",
-        },
-        createdAt: "2024-01-20T11:45:00Z",
-        updatedAt: "2024-01-20T11:45:00Z",
+      invalidatesTags: [{ type: "Role", id: "LIST" }],
+    }),
+    updateRole: builder.mutation<Role, { id: string; data: Partial<UpdateRoleRequest> }>({
+      queryFn: async ({ id, data }) => {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        const index = dummyRoles.findIndex((r) => r.id === id)
+        if (index !== -1) {
+          dummyRoles[index] = { ...dummyRoles[index], ...data, updatedAt: new Date().toISOString() }
+          return { data: dummyRoles[index] }
+        }
+        return { error: { status: 404, data: "Role not found" } }
       },
-      {
-        id: "5",
-        name: "Project Manager",
-        description: "Project-specific management role with enhanced permissions for project coordination",
-        permissions: ["read", "write", "manage_projects"],
-        userCount: 4,
-        status: "active",
-        tenant: {
-          id: "3",
-          name: "StartupXYZ",
-        },
-        createdAt: "2024-01-22T16:20:00Z",
-        updatedAt: "2024-01-22T16:20:00Z",
+      invalidatesTags: (_result, _error, { id }) => [{ type: "Role", id }, { type: "Role", id: "LIST" }],
+    }),
+    deleteRole: builder.mutation<{ success: boolean; id: string }, string>({
+      queryFn: async (id) => {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        const index = dummyRoles.findIndex((r) => r.id === id)
+        if (index !== -1) {
+          dummyRoles.splice(index, 1)
+          return { data: { success: true, id } }
+        }
+        return { error: { status: 404, data: "Role not found" } }
       },
-      {
-        id: "6",
-        name: "Read Only",
-        description: "View-only access for reporting and monitoring purposes without modification capabilities",
-        permissions: ["read"],
-        userCount: 5,
-        status: "active",
-        tenant: {
-          id: "2",
-          name: "Global Dynamics",
-        },
-        createdAt: "2024-01-22T16:20:00Z",
-        updatedAt: "2024-01-22T16:20:00Z",
-      },
-      {
-        id: "7",
-        name: "Guest",
-        description: "Limited temporary access for external users and contractors",
-        permissions: ["read"],
-        userCount: 2,
-        status: "inactive",
-        tenant: {
-          id: "3",
-          name: "StartupXYZ",
-        },
-        createdAt: "2024-01-25T08:30:00Z",
-        updatedAt: "2024-01-25T08:30:00Z",
-      },
-      {
-        id: "8",
-        name: "System Administrator",
-        description: "Global system administration role with cross-tenant management capabilities",
-        permissions: ["read", "write", "delete", "admin", "system_config"],
-        userCount: 1,
-        status: "active",
-        tenant: null, // Global role
-        createdAt: "2024-01-26T10:15:00Z",
-        updatedAt: "2024-01-26T10:15:00Z",
-      },
-    ]
+      invalidatesTags: (_result, _error, id) => [{ type: "Role", id }, { type: "Role", id: "LIST" }],
+    }),
+  }),
+})
 
-    // Apply filters
-    let filteredRoles = dummyRoles
-    if (filters?.status) {
-      filteredRoles = filteredRoles.filter((r) => r.status === filters.status)
-    }
-    if (filters?.search) {
-      const search = filters.search.toLowerCase()
-      filteredRoles = filteredRoles.filter(
-        (r) =>
-          r.name.toLowerCase().includes(search) ||
-          r.description.toLowerCase().includes(search) ||
-          (r.tenant && r.tenant.name.toLowerCase().includes(search)),
-      )
-    }
-    if (filters?.tenant_id) {
-      if (filters.tenant_id === "global") {
-        filteredRoles = filteredRoles.filter((r) => !r.tenant)
-      } else {
-        filteredRoles = filteredRoles.filter((r) => r.tenant?.id === filters.tenant_id)
-      }
-    }
-
-    return {
-      data: filteredRoles,
-      message: "Roles retrieved successfully",
-      success: true,
-      pagination: {
-        page: 1,
-        limit: 10,
-        total: filteredRoles.length,
-        totalPages: Math.ceil(filteredRoles.length / 10),
-      },
-    }
-  }
-
-  async getById(id: string): Promise<ApiResponse<Role>> {
-    const allRoles = await this.getAll()
-    const role = allRoles.data.find((r) => r.id === id)
-
-    if (!role) {
-      throw this.handleError(new Error("Role not found"))
-    }
-
-    return {
-      data: role,
-      message: "Role retrieved successfully",
-      success: true,
-    }
-  }
-
-  async create(data: CreateRoleRequest): Promise<ApiResponse<Role>> {
-    const newRole: Role = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: data.name,
-      description: data.description,
-      permissions: data.permissions,
-      userCount: 0,
-      status: "active",
-      tenant: data.tenant_id
-        ? {
-            id: data.tenant_id,
-            name: "Mock Tenant", // In real app, would fetch tenant name
-          }
-        : null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    return {
-      data: newRole,
-      message: "Role created successfully",
-      success: true,
-    }
-  }
-
-  async update(id: string, data: Partial<UpdateRoleRequest>): Promise<ApiResponse<Role>> {
-    const existing = await this.getById(id)
-    const updatedRole: Role = {
-      ...existing.data,
-      ...data,
-      updatedAt: new Date().toISOString(),
-    }
-
-    return {
-      data: updatedRole,
-      message: "Role updated successfully",
-      success: true,
-    }
-  }
-
-  async delete(id: string): Promise<ApiResponse<void>> {
-    // Simulate deletion
-    return {
-      data: undefined,
-      message: "Role deleted successfully",
-      success: true,
-    }
-  }
-}
-
-export const roleApiService = new RoleApiService()
+export const {
+  useGetRolesQuery,
+  useGetRoleByIdQuery,
+  useCreateRoleMutation,
+  useUpdateRoleMutation,
+  useDeleteRoleMutation,
+} = roleApiSlice

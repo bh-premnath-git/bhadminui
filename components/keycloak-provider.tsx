@@ -27,6 +27,7 @@ export function KeycloakProvider({ children }: KeycloakProviderProps) {
     kcInstance
       .init({ onLoad: "login-required" })
       .then((auth) => {
+        console.log("KeycloakProvider: Auth success! Token:", kcInstance.token)
         dispatch(setAuthenticated(auth))
         dispatch(
           setToken({ token: kcInstance.token, tokenParsed: kcInstance.tokenParsed })

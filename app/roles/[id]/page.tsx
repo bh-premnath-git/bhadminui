@@ -1,13 +1,11 @@
 "use client"
 
-import { useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
-import { fetchRoleById, clearCurrentRole } from "@/lib/features/role/role-slice"
+import { useGetRoleByIdQuery, useDeleteRoleMutation } from "@/lib/services/role-api-service"
 import {
   ArrowLeft,
   Shield,
@@ -26,32 +24,33 @@ import { Separator } from "@/components/ui/separator"
 export default function RoleDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const dispatch = useAppDispatch()
-  const { currentRole, loading, error } = useAppSelector((state) => state.role)
-
   const roleId = params.id as string
 
-  useEffect(() => {
-    if (roleId) {
-      dispatch(fetchRoleById(roleId))
-    }
-
-    // Cleanup when component unmounts
-    return () => {
-      dispatch(clearCurrentRole())
-    }
-  }, [dispatch, roleId])
+  const { data: currentRole, isLoading: loading, error } = useGetRoleByIdQuery(roleId, {
+    skip: !roleId, // Don't fetch until we have an ID
+  })
+  const [deleteRole] = useDeleteRoleMutation()
 
   const handleBack = () => {
     router.push("/roles")
   }
 
   const handleEdit = () => {
-    console.log("Edit role:", currentRole?.id)
+    // Navigate to an edit page or open a modal
+    if (currentRole) {
+      router.push(`/roles/${currentRole.id}/edit`)
+    }
   }
 
-  const handleDelete = () => {
-    console.log("Delete role:", currentRole?.id)
+  const handleDelete = async () => {
+    if (!currentRole) return
+    try {
+      await deleteRole(currentRole.id).unwrap()
+      router.push("/roles")
+    } catch (err) {
+      console.error("Failed to delete the role:", err)
+      // Optionally show an error toast
+    }
   }
 
   const handleManageUsers = () => {
@@ -72,7 +71,7 @@ export default function RoleDetailPage() {
     return (
       <div className="flex-1 space-y-6 p-6">
         <div className="text-center">
-          <div className="text-red-600 mb-4">Error: {error}</div>
+          <div className="text-red-600 mb-4">Failed to load role details.</div>
           <Button onClick={handleBack} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Roles

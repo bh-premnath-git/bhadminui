@@ -1,13 +1,11 @@
 "use client"
 
-import { useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
-import { fetchTenantById, clearCurrentTenant } from "@/lib/features/tenant/tenant-slice"
+import { useGetTenantByIdQuery } from "@/lib/services/tenant-api-service"
 import {
   ArrowLeft,
   Building2,
@@ -27,21 +25,13 @@ import { Separator } from "@/components/ui/separator"
 export default function TenantDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const dispatch = useAppDispatch()
-  const { currentTenant, loading, error } = useAppSelector((state) => state.tenant)
-
   const tenantId = params.id as string
 
-  useEffect(() => {
-    if (tenantId) {
-      dispatch(fetchTenantById(tenantId))
-    }
+  const { data: tenantResponse, isLoading: loading, error } = useGetTenantByIdQuery(tenantId, {
+    skip: !tenantId,
+  })
 
-    // Cleanup when component unmounts
-    return () => {
-      dispatch(clearCurrentTenant())
-    }
-  }, [dispatch, tenantId])
+  const currentTenant = tenantResponse
 
   const handleBack = () => {
     router.push("/tenants")
@@ -71,7 +61,7 @@ export default function TenantDetailPage() {
     return (
       <div className="flex-1 space-y-6 p-6">
         <div className="text-center">
-          <div className="text-red-600 mb-4">Error: {error}</div>
+          <div className="text-red-600 mb-4">Failed to load tenant. Please try again.</div>
           <Button onClick={handleBack} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Tenants

@@ -1,16 +1,28 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
-import { tenantApiService } from "./tenant-api-service"
-import { userApiService } from "./user-api-service"
-import { roleApiService } from "./role-api-service"
+import { createApi, fetchBaseQuery, BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query/react"
+import type { RootState } from "../store"
+
+const baseQuery = fetchBaseQuery({
+  baseUrl: "/api",
+  prepareHeaders: (headers, { getState }) => {
+    const token = (getState() as RootState).auth.token
+    console.log("Token from prepareHeaders:", token)
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`)
+    }
+    return headers
+  },
+})
+
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (args, api, extraOptions) => {
+  let result = await baseQuery(args, api, extraOptions)
+  // This is where you would handle token refresh logic if a 401 occurs
+  // For now, it just ensures the latest state is used.
+  return result
+}
 
 export const apiService = createApi({
   reducerPath: "api",
-  baseQuery: fetchBaseQuery({
-    baseUrl: "/api",
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ["Tenant", "User", "Role"],
   endpoints: () => ({}),
 })
-
-// Export service instances for direct use
-export { tenantApiService, userApiService, roleApiService }
