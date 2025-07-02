@@ -1,8 +1,7 @@
 "use client"
 
-import { CardDescription } from "@/components/ui/card"
-
 import { useEffect } from "react"
+import { CardDescription } from "@/components/ui/card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
 import { fetchRoles, setFilters } from "@/lib/features/role/role-slice"
-import { Search, Shield, Users, Settings, Eye, Edit, Trash2, MoreHorizontal, Plus, Building2 } from "lucide-react"
+import { Search, Shield, Users, Settings, Eye, Edit, Trash2, MoreHorizontal, Building2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
 
@@ -130,21 +129,6 @@ export default function RolesPage() {
             <h1 className="text-3xl font-bold tracking-tight">Role Management</h1>
             <p className="text-muted-foreground">Manage roles and permissions across tenants and system-wide</p>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  className="bg-foreground text-background hover:bg-foreground/90 shadow-lg hover:shadow-xl transition-all duration-200 h-10 w-10"
-                >
-                  <Plus className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Create New Role</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
 
         {/* Filters */}
@@ -301,19 +285,32 @@ export default function RolesPage() {
                     <Shield className="h-4 w-4" />
                     <span>Permissions</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 min-h-[3rem]">
-                    {role.permissions.slice(0, 4).map((permission) => (
-                      <Badge
-                        key={permission}
-                        variant="outline"
-                        className={`text-xs px-2 py-1 border transition-colors ${getPermissionColor(permission)} hover:opacity-80`}
-                      >
-                        <div className="flex items-center gap-1">
-                          {getPermissionIcon(permission)}
-                          <span>{permission.replace("_", " ")}</span>
-                        </div>
-                      </Badge>
-                    ))}
+                  <div className="flex flex-wrap gap-1.5">
+                    {role.permissions.slice(0, 4).map((permission) => {
+                      const permissionText = permission.replace("_", " ")
+                      return (
+                        <TooltipProvider key={permission} delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge
+                                variant="outline"
+                                className={`w-28 text-xs px-2 py-1 border transition-colors ${getPermissionColor(
+                                  permission
+                                )} hover:opacity-80`}
+                              >
+                                <div className="flex w-full items-center justify-center gap-1">
+                                  {getPermissionIcon(permission)}
+                                  <span className="truncate">{permissionText}</span>
+                                </div>
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{permissionText}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )
+                    })}
                     {role.permissions.length > 4 && (
                       <Badge
                         variant="outline"
@@ -347,25 +344,12 @@ export default function RolesPage() {
               <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
                 <Shield className="h-8 w-8 text-slate-400 dark:text-slate-500" />
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">No roles found</h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm mx-auto">
+              <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Roles are empty</h3>
+              <p className="text-slate-600 dark:text-slate-400">
                 {filters.search || filters.status || filters.tenant_id
-                  ? "Try adjusting your filters to see more results"
-                  : "Get started by creating your first role to manage user permissions"}
+                  ? "Try adjusting your search or filters."
+                  : "There are currently no roles to display."}
               </p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button className="bg-foreground text-background hover:bg-foreground/90 shadow-lg hover:shadow-xl transition-all duration-200">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Role
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Create a new role to get started</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </CardContent>
           </Card>
         )}

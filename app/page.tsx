@@ -1,15 +1,16 @@
-
 "use client"
-import { useEffect } from "react"
-import { RecentActivities } from "@/components/recent-activities"
+import { useEffect, useMemo } from "react"
+import { RecentActivities,  type Activity  } from "@/components/recent-activities"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
 import { fetchTenants } from "@/lib/features/tenant/tenant-slice"
 import { fetchUsers } from "@/lib/features/user/user-slice"
+import { Building2, User } from "lucide-react"
 
 export default function HomePage() {
   const dispatch = useAppDispatch()
   const { tenants } = useAppSelector((state) => state.tenant)
+  const { users } = useAppSelector((state) => state.user)
 
   useEffect(() => {
     dispatch(fetchTenants())
@@ -27,6 +28,32 @@ export default function HomePage() {
     )
   }).length
 
+  const activities: Activity[] = useMemo(() => {
+    const tenantActs = tenants.map((t) => ({
+      id: `tenant-${t.id}`,
+      type: "tenant_created",
+      title: `Tenant created: ${t.tenant_name}`,
+      description: t.tenant_description,
+      timestamp: t.createdAt,
+      status: "completed",
+      icon: Building2,
+      user: `${t.first_name} ${t.last_name}`,
+    }))
+    const userActs = users.map((u) => ({
+      id: `user-${u.id}`,
+      type: "user_created",
+      title: `User created: ${u.first_name} ${u.last_name}`,
+      description: u.email,
+      timestamp: u.createdAt,
+      status: "completed",
+      icon: User,
+      user: `${u.first_name} ${u.last_name}`,
+    }))
+    return [...tenantActs, ...userActs].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+  }, [tenants, users])
+
   return (
       <div className="flex-1 space-y-6 p-6">
         <div>
@@ -36,7 +63,7 @@ export default function HomePage() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <RecentActivities />
+            <RecentActivities activities={activities} limit={3}/>
 
           </div>
           <div>
@@ -45,19 +72,26 @@ export default function HomePage() {
                 <CardTitle>Quick Stats</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Active Tenants</span>
-                  <span className="font-medium">{activeTenants}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Pending Onboarding</span>
-                  <span className="font-medium">{pendingTenants}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">This Month</span>
-                  <span className="font-medium">{tenantsThisMonth}</span>
-                </div>
+                {tenants.length > 0 ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Active Tenants</span>
+                      <span className="font-medium">{activeTenants}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Pending Onboarding</span>
+                      <span className="font-medium">{pendingTenants}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">This Month</span>
+                      <span className="font-medium">{tenantsThisMonth}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    <p>No tenant data to display.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

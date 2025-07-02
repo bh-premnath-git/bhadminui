@@ -1,23 +1,19 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { UserCreationModal } from "@/components/user-creation-modal"
 import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
-import { fetchUsers, setFilters, createUser } from "@/lib/features/user/user-slice"
-import { Search, Users, Mail, Shield, Calendar, UserPlus, Building2 } from "lucide-react"
-import type { CreateUserRequest } from "@/lib/types/user"
+import { fetchUsers, setFilters } from "@/lib/features/user/user-slice"
+import { Search, Users, Mail, Shield, Calendar, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function UsersPage() {
   const dispatch = useAppDispatch()
   const { users, loading, error, filters } = useAppSelector((state) => state.user)
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -34,26 +30,6 @@ export default function UsersPage() {
 
   const handleStatusFilter = (status: string) => {
     dispatch(setFilters({ ...filters, status: status === "all" ? undefined : (status as any) }))
-  }
-
-  const handleCreateUser = async (data: {
-    email: string
-    first_name: string
-    last_name: string
-    role_id?: string
-    tenant_id?: string
-  }) => {
-    const userRequest: CreateUserRequest = {
-      email: data.email,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      role: "user", // Default role, can be enhanced based on role_id
-      tenant_id: data.tenant_id,
-    }
-
-    await dispatch(createUser(userRequest))
-    // Refresh the users list
-    dispatch(fetchUsers(filters))
   }
 
   const getRoleColor = (role: string) => {
@@ -121,22 +97,6 @@ export default function UsersPage() {
             <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
             <p className="text-muted-foreground">Manage users across all tenants with role assignments</p>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-foreground text-background hover:bg-foreground/90 shadow-lg hover:shadow-xl transition-all duration-200 h-10 w-10"
-                >
-                  <UserPlus className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Add New User</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
 
         {/* Filters */}
@@ -255,37 +215,20 @@ export default function UsersPage() {
         </div>
 
         {users.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No users found</h3>
-              <p className="text-muted-foreground mb-4">
+          <Card className="border-dashed border-2 border-slate-300 dark:border-slate-600">
+            <CardContent className="text-center py-16">
+              <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                <Users className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Users are empty</h3>
+              <p className="text-slate-600 dark:text-slate-400">
                 {filters.search || filters.role || filters.status
-                  ? "Try adjusting your filters"
-                  : "Get started by creating your first user"}
+                  ? "Try adjusting your search or filters."
+                  : "There are currently no users to display."}
               </p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={() => setIsModalOpen(true)}
-                      className="bg-foreground text-background hover:bg-foreground/90 shadow-lg hover:shadow-xl transition-all duration-200"
-                    >
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Add User
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Create a new user account</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </CardContent>
           </Card>
         )}
-
-        {/* User Creation Modal */}
-        <UserCreationModal open={isModalOpen} onOpenChange={setIsModalOpen} onSubmit={handleCreateUser} />
       </div>
   )
 }
