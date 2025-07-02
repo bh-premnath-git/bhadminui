@@ -68,7 +68,7 @@ export const LazyLoading = ({
 
         {/* centre logo */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="size-[35%] animate-[pulse_2.5s_ease-in-out_infinite] drop-shadow-lg">
+          <div className="relative size-[35%] animate-[pulse_2.5s_ease-in-out_infinite] drop-shadow-lg">
             <Image
               src="/assets/logo/loaderLogo.svg"
               alt="Loader logo"
