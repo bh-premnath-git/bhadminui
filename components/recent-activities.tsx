@@ -3,7 +3,18 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Building2, UserPlus, Settings, CheckCircle } from "lucide-react"
 
-const activities = [
+export interface Activity {
+  id: string
+  type: string
+  title: string
+  description: string
+  timestamp: string
+  status: string
+  icon: React.ComponentType<{ className?: string }>
+  user: string
+}
+
+const defaultActivities: Activity[] = [
   {
     id: 1,
     type: "tenant_created",
@@ -59,7 +70,13 @@ const getStatusColor = (status: string) => {
   }
 }
 
-export function RecentActivities() {
+interface RecentActivitiesProps {
+  activities?: Activity[]
+  limit?: number
+}
+
+export function RecentActivities({ activities = defaultActivities, limit = 4 }: RecentActivitiesProps) {
+  const data = activities.slice(0, limit)
   return (
     <Card>
       <CardHeader>
@@ -68,7 +85,7 @@ export function RecentActivities() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {activities.map((activity) => {
+          {data.map((activity) => {
             const IconComponent = activity.icon
             return (
               <div key={activity.id} className="flex items-start space-x-3">
