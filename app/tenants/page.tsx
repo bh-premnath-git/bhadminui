@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,11 +12,13 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
 import { fetchTenants, setFilters } from "@/lib/features/tenant/tenant-slice"
 import { Search, Building2, Mail, User, Tag, MoreHorizontal, Edit, Trash2, UserPlus } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { TenantCreationModal } from "@/components/tenant-creation-modal"
 
 export default function TenantsPage() {
   const dispatch = useAppDispatch()
   const router = useRouter()
   const { tenants, loading, error, filters } = useAppSelector((state) => state.tenant)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     dispatch(fetchTenants(filters))
@@ -53,7 +55,7 @@ export default function TenantsPage() {
   }
 
   const handleAddTenant = () => {
-    router.push("/")
+    setIsModalOpen(true)
   }
 
   if (loading) {
@@ -297,6 +299,8 @@ export default function TenantsPage() {
             </CardContent>
           </Card>
         )}
+        {/* Tenant Creation Modal */}
+        <TenantCreationModal open={isModalOpen} onOpenChange={setIsModalOpen} />
       </div>
   )
 }
