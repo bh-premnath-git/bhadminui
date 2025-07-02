@@ -1,12 +1,6 @@
-"use client"
 
-import { useEffect, useMemo } from "react"
-import { RecentActivities, type Activity } from "@/components/recent-activities"
+import { RecentActivities } from "@/components/recent-activities"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAppDispatch, useAppSelector } from "@/lib/hooks/redux-hooks"
-import { fetchTenants } from "@/lib/features/tenant/tenant-slice"
-import { fetchUsers } from "@/lib/features/user/user-slice"
-import { Building2, Clock, CalendarDays, User } from "lucide-react"
 
 export default function HomePage() {
   const dispatch = useAppDispatch()
@@ -64,7 +58,8 @@ export default function HomePage() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <RecentActivities activities={activities} limit={3} />
+            <RecentActivities />
+
           </div>
           <div>
             <Card>
@@ -72,26 +67,18 @@ export default function HomePage() {
                 <CardTitle>Quick Stats</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium">Active Tenants</span>
-                  </div>
-                  <span className="text-lg font-bold text-blue-600">{activeTenants}</span>
+
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Active Tenants</span>
+                  <span className="font-medium">24</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-yellow-600" />
-                    <span className="text-sm font-medium">Pending Onboarding</span>
-                  </div>
-                  <span className="text-lg font-bold text-yellow-600">{pendingTenants}</span>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Pending Onboarding</span>
+                  <span className="font-medium">3</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium">Created This Month</span>
-                  </div>
-                  <span className="text-lg font-bold text-green-600">{tenantsThisMonth}</span>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">This Month</span>
+                  <span className="font-medium">8</span>
                 </div>
               </CardContent>
             </Card>
