@@ -1,3 +1,5 @@
+import { LazyLoading } from "@/components/LazyLoading";
+
 export default function Loading() {
-  return null
+  return <LazyLoading fullScreen />;
 }
