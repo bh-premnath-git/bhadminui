@@ -2,7 +2,7 @@ import { BaseApiService } from "./base-api-service"
 import type { User, CreateUserRequest, UpdateUserRequest, UserFilters } from "../types/user"
 import type { ApiResponse, PaginatedResponse } from "../types/api"
 
-class UserApiService extends BaseApiService {
+class UserApiService extends BaseApiService<User, CreateUserRequest, UpdateUserRequest, UserFilters> {
   constructor() {
     super("/api/users")
   }

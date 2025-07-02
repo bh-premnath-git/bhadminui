@@ -1,6 +1,6 @@
 import type { ApiResponse, PaginatedResponse, ApiError } from "../types/api"
 
-export abstract class BaseApiService {
+export abstract class BaseApiService<EntityType, CreateType, UpdateType, FilterType = Record<string, any>> {
   protected baseUrl: string
   protected headers: Record<string, string>
 
@@ -49,9 +49,9 @@ export abstract class BaseApiService {
   }
 
   // CRUD operations interface
-  abstract getAll<T>(filters?: Record<string, any>): Promise<PaginatedResponse<T>>
-  abstract getById<T>(id: string): Promise<ApiResponse<T>>
-  abstract create<T, K>(data: K): Promise<ApiResponse<T>>
-  abstract update<T, K>(id: string, data: K): Promise<ApiResponse<T>>
+  abstract getAll(filters?: FilterType): Promise<PaginatedResponse<EntityType>>
+  abstract getById(id: string): Promise<ApiResponse<EntityType>>
+  abstract create(data: CreateType): Promise<ApiResponse<EntityType>>
+  abstract update(id: string, data: Partial<UpdateType>): Promise<ApiResponse<EntityType>>
   abstract delete(id: string): Promise<ApiResponse<void>>
 }

@@ -2,7 +2,7 @@ import { BaseApiService } from "./base-api-service"
 import type { Tenant, CreateTenantRequest, UpdateTenantRequest, TenantFilters } from "../types/tenant"
 import type { ApiResponse, PaginatedResponse } from "../types/api"
 
-class TenantApiService extends BaseApiService {
+class TenantApiService extends BaseApiService<Tenant, CreateTenantRequest, UpdateTenantRequest, TenantFilters> {
   constructor() {
     super("/api/tenants")
   }

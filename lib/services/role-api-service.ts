@@ -2,7 +2,7 @@ import { BaseApiService } from "./base-api-service"
 import type { Role, CreateRoleRequest, UpdateRoleRequest, RoleFilters } from "../types/role"
 import type { ApiResponse, PaginatedResponse } from "../types/api"
 
-class RoleApiService extends BaseApiService {
+class RoleApiService extends BaseApiService<Role, CreateRoleRequest, UpdateRoleRequest, RoleFilters> {
   constructor() {
     super("/api/roles")
   }
