@@ -25,23 +25,24 @@ export function KeycloakProvider({ children }: KeycloakProviderProps) {
 
     dispatch(setKeycloak(kcInstance))
 
-    kcInstance
-      .init({ onLoad: "login-required" })
-      .then((auth) => {
+    const initKeycloak = async () => {
+      try {
+        const auth = await kcInstance.init({ onLoad: "login-required" })
         dispatch(setAuthenticated(auth))
         const token = kcInstance.token
         dispatch(setToken({ token, tokenParsed: kcInstance.tokenParsed }))
         if (auth) {
-          dispatch(generateToken(token))
+          await dispatch(generateToken(token)).unwrap()
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Keycloak init failed:", error)
         dispatch(setAuthenticated(false))
-      })
-      .finally(() => {
+      } finally {
         setIsLoading(false)
-      })
+      }
+    }
+
+    initKeycloak()
 
     kcInstance.onAuthSuccess = () => {
       dispatch(setAuthenticated(true))
