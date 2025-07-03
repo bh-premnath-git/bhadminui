@@ -1,13 +1,20 @@
 import type { BaseEntity } from "./api"
 
+export interface Tag {
+  key: string
+  value: string
+}
+
 export interface Tenant extends BaseEntity {
   tenant_name: string
+  tenant_key: string
   tenant_description: string
-  email: string
-  first_name: string
-  last_name: string
-  bh_tags: Record<string, string>
-  status: "active" | "inactive" | "pending"
+  tenant_logo_path: string
+  bh_tags: Tag[]
+  tenant_status: "active" | "inactive"
+  kc_realm_id: string
+  kc_client_id: string
+  client_key: string
 }
 
 export interface CreateTenantRequest {
@@ -16,7 +23,7 @@ export interface CreateTenantRequest {
   email: string
   first_name: string
   last_name: string
-  bh_tags: Record<string, string>
+  bh_tags: Tag[]
 }
 
 export interface UpdateTenantRequest extends Partial<CreateTenantRequest> {
@@ -24,7 +31,18 @@ export interface UpdateTenantRequest extends Partial<CreateTenantRequest> {
 }
 
 export interface TenantFilters {
-  status?: Tenant["status"]
   search?: string
+  tenant_status?: "active" | "inactive"
+  limit?: number
+  offset?: number
   tags?: string[]
+}
+
+export interface TenantCreationSuccessData {
+  success: boolean
+  username: string
+  password?: string
+  realm_id: string
+  client_id: string
+  login_url: string
 }

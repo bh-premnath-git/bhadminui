@@ -9,25 +9,34 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useGetTenantsQuery, useDeleteTenantMutation } from "@/lib/services/tenant-api-service"
-import { Search, Building2, Mail, User, Tag, MoreHorizontal, Edit, Trash2, UserPlus } from "lucide-react"
+import { Search, Building2, Mail, Tag, MoreHorizontal, Edit, Trash2, UserPlus } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { TenantCreationModal } from "@/components/tenant-creation-modal"
 import type { TenantFilters } from "@/lib/types/tenant"
 
+const PAGE_SIZE = 6
+
 export default function TenantsPage() {
   const router = useRouter()
   const [filters, setFilters] = useState<TenantFilters>({})
+  const [offset, setOffset] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const { data: tenantsResponse, isLoading: loading, error } = useGetTenantsQuery(filters)
+  const { data: tenantsResponse, isLoading: loading, error } = useGetTenantsQuery({
+    ...filters,
+    limit: PAGE_SIZE,
+    offset,
+  })
   const [deleteTenant] = useDeleteTenantMutation()
 
   const handleSearchChange = (search: string) => {
+    setOffset(0)
     setFilters({ ...filters, search })
   }
 
   const handleStatusFilter = (status: string) => {
-    setFilters({ ...filters, status: status === "all" ? undefined : (status as any) })
+    setOffset(0)
+    setFilters({ ...filters, tenant_status: status === "all" ? undefined : (status as any) })
   }
 
   const handleTenantClick = (tenantId: string) => {
@@ -45,6 +54,18 @@ export default function TenantsPage() {
     } catch (err) {
       console.error("Failed to delete the tenant:", err)
       // Optionally show an error toast
+    }
+  }
+
+  const handleNextPage = () => {
+    if (tenantsResponse?.next) {
+      setOffset(offset + PAGE_SIZE)
+    }
+  }
+
+  const handlePrevPage = () => {
+    if (tenantsResponse?.prev) {
+      setOffset(offset - PAGE_SIZE)
     }
   }
 
@@ -133,7 +154,6 @@ export default function TenantsPage() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
@@ -160,8 +180,8 @@ export default function TenantsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge className={`${getStatusColor(tenant.status)} font-medium px-2 py-1 text-xs border`}>
-                    {tenant.status}
+                  <Badge className={`${getStatusColor(tenant.tenant_status)} font-medium px-2 py-1 text-xs border`}>
+                    {tenant.tenant_status}
                   </Badge>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -213,42 +233,36 @@ export default function TenantsPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                   <Mail className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
-                  <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{tenant.email}</span>
-                </div>
-                <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                  <User className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
-                  <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
-                    {tenant.first_name} {tenant.last_name}
-                  </span>
+                  <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{tenant.created_by}</span>
                 </div>
               </div>
 
               {/* Tags Section */}
               <div className="space-y-2">
-                {Object.keys(tenant.bh_tags).length > 0 ? (
+                {tenant.bh_tags.length > 0 ? (
                   <>
                     <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                       <Tag className="h-4 w-4" />
                       <span>Tags</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5 min-h-[2rem]">
-                      {Object.entries(tenant.bh_tags)
+                      {tenant.bh_tags
                         .slice(0, 3)
-                        .map(([key, value]) => (
+                        .map((tag) => (
                           <Badge
-                            key={key}
+                            key={tag.key}
                             variant="outline"
                             className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                           >
-                            {truncateText(value, 12)}
+                            <span className="font-semibold">{tag.key}:</span>&nbsp;{truncateText(tag.value, 12)}
                           </Badge>
                         ))}
-                      {Object.keys(tenant.bh_tags).length > 3 && (
+                      {tenant.bh_tags.length > 3 && (
                         <Badge
                           variant="outline"
                           className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-600"
                         >
-                          +{Object.keys(tenant.bh_tags).length - 3}
+                          +{tenant.bh_tags.length - 3}
                         </Badge>
                       )}
                     </div>
@@ -276,6 +290,22 @@ export default function TenantsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {tenantsResponse && tenantsResponse.total > PAGE_SIZE && (
+        <div className="flex justify-end items-center gap-4 mt-6">
+          <span className="text-sm text-muted-foreground">
+            Showing {Math.min(offset + 1, tenantsResponse.total)}-{Math.min(offset + PAGE_SIZE, tenantsResponse.total)} of{" "}
+            {tenantsResponse.total}
+          </span>
+          <Button variant="outline" onClick={handlePrevPage} disabled={!tenantsResponse?.prev}>
+            Previous
+          </Button>
+          <Button variant="outline" onClick={handleNextPage} disabled={!tenantsResponse?.next}>
+            Next
+          </Button>
+        </div>
+      )}
 
       {tenantsResponse?.data.length === 0 && (
         <Card className="col-span-full border-dashed border-2 border-slate-300 dark:border-slate-600">

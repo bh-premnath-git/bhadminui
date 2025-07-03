@@ -11,21 +11,39 @@ import { Search, Users, Mail, Shield, Calendar, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import type { UserFilters } from "@/lib/types/user"
 
+const PAGE_SIZE = 6
+
 export default function UsersPage() {
   const [filters, setFilters] = useState<UserFilters>({})
-  const { data: usersResponse, isLoading, error } = useGetUsersQuery(filters)
+  const [offset, setOffset] = useState(0)
+  const { data: usersResponse, isLoading, error } = useGetUsersQuery({ ...filters, limit: PAGE_SIZE, offset })
   const router = useRouter()
 
   const handleSearchChange = (search: string) => {
+    setOffset(0)
     setFilters({ ...filters, search })
   }
 
   const handleRoleFilter = (role: string) => {
+    setOffset(0)
     setFilters({ ...filters, role: role === "all" ? undefined : (role as any) })
   }
 
   const handleStatusFilter = (status: string) => {
+    setOffset(0)
     setFilters({ ...filters, status: status === "all" ? undefined : (status as any) })
+  }
+
+  const handleNextPage = () => {
+    if (usersResponse?.next) {
+      setOffset(offset + PAGE_SIZE)
+    }
+  }
+
+  const handlePrevPage = () => {
+    if (usersResponse?.prev) {
+      setOffset(offset - PAGE_SIZE)
+    }
   }
 
   const getRoleColor = (role: string) => {
@@ -201,6 +219,22 @@ export default function UsersPage() {
             </Card>
           ))}
         </div>
+
+        {/* Pagination Controls */}
+        {usersResponse && usersResponse.total > PAGE_SIZE && (
+          <div className="flex justify-end items-center gap-4 mt-6">
+            <span className="text-sm text-muted-foreground">
+              Showing {Math.min(offset + 1, usersResponse.total)}-{Math.min(offset + PAGE_SIZE, usersResponse.total)} of{" "}
+              {usersResponse.total}
+            </span>
+            <Button variant="outline" onClick={handlePrevPage} disabled={!usersResponse?.prev}>
+              Previous
+            </Button>
+            <Button variant="outline" onClick={handleNextPage} disabled={!usersResponse?.next}>
+              Next
+            </Button>
+          </div>
+        )}
 
         {usersResponse?.data.length === 0 && (
           <Card className="border-dashed border-2 border-slate-300 dark:border-slate-600">

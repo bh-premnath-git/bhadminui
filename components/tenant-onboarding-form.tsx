@@ -6,7 +6,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { X, Plus, ChevronRight, RotateCcw, Check, Loader2 } from "lucide-react"
+import { X, Plus, ChevronRight, RotateCcw, Check, Loader2, CheckCircle, ExternalLink, Copy } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useTenantOnboarding } from "@/hooks/use-tenant-onboarding"
 import { cn } from "@/lib/utils"
+import { TenantCreationSuccessData } from "@/lib/types/tenant"
 
 const formSchema = z.object({
   tenant_name: z.string().min(2, "Tenant name must be at least 2 characters"),
@@ -23,7 +24,12 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   first_name: z.string().min(2, "First name must be at least 2 characters"),
   last_name: z.string().min(2, "Last name must be at least 2 characters"),
-  bh_tags: z.record(z.string()).default({}),
+  bh_tags: z.array(
+    z.object({
+      key: z.string().min(1, "Tag key cannot be empty"),
+      value: z.string().min(1, "Tag value cannot be empty"),
+    }),
+  ),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -36,8 +42,10 @@ const accordionSections = [
 
 export function TenantOnboardingForm() {
   const { createTenant, isLoading } = useTenantOnboarding()
-  const [tagInput, setTagInput] = useState("")
+  const [tagKeyInput, setTagKeyInput] = useState("")
+  const [tagValueInput, setTagValueInput] = useState("")
   const [openSections, setOpenSections] = useState<string[]>(["basic"])
+  const [creationSuccessData, setCreationSuccessData] = useState<TenantCreationSuccessData | null>(null)
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -47,32 +55,38 @@ export function TenantOnboardingForm() {
       email: "",
       first_name: "",
       last_name: "",
-      bh_tags: {},
+      bh_tags: [],
     },
   })
 
   const toggleSection = (sectionId: string) => {
-    setOpenSections((prev) => (prev.includes(sectionId) ? prev.filter((id) => id !== sectionId) : [...prev, sectionId]))
+    setOpenSections((prev) => (prev.includes(sectionId) ? [] : [sectionId]))
   }
 
   const addTag = () => {
-    if (!tagInput.trim()) return
+    const key = tagKeyInput.trim()
+    const value = tagValueInput.trim()
+    if (!key || !value) return
 
     const currentTags = form.getValues("bh_tags")
-    const tagKey = tagInput.trim().toLowerCase().replace(/\s+/g, "_")
+    if (currentTags.some((tag) => tag.key === key)) {
+      form.setError("bh_tags", { type: "manual", message: "Tag keys must be unique." })
+      return
+    }
+    form.clearErrors("bh_tags")
 
-    form.setValue("bh_tags", {
-      ...currentTags,
-      [tagKey]: tagInput.trim(),
-    })
+    form.setValue("bh_tags", [...currentTags, { key, value }])
 
-    setTagInput("")
+    setTagKeyInput("")
+    setTagValueInput("")
   }
 
-  const removeTag = (tagKey: string) => {
+  const removeTag = (keyToRemove: string) => {
     const currentTags = form.getValues("bh_tags")
-    const { [tagKey]: removed, ...remainingTags } = currentTags
-    form.setValue("bh_tags", remainingTags)
+    form.setValue(
+      "bh_tags",
+      currentTags.filter((tag) => tag.key !== keyToRemove),
+    )
   }
 
   const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
@@ -84,16 +98,91 @@ export function TenantOnboardingForm() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      await createTenant(data)
-      form.reset()
-      setTagInput("")
-      // Show success message
+      // Automatically add any un-added tag from the input fields before submitting
+      const key = tagKeyInput.trim()
+      const value = tagValueInput.trim()
+      let finalData = data
+
+      if (key && value) {
+        if (data.bh_tags.some((tag) => tag.key === key)) {
+          form.setError("bh_tags", {
+            type: "manual",
+            message: "You have an un-added tag with a duplicate key. Please resolve it before submitting.",
+          })
+          return // Stop submission
+        }
+        finalData = {
+          ...data,
+          bh_tags: [...data.bh_tags, { key, value }],
+        }
+      }
+
+      const response: any = await createTenant(finalData)
+      if (response) {
+        setCreationSuccessData(response)
+        form.reset()
+        setTagKeyInput("")
+        setTagValueInput("")
+      }
     } catch (error) {
       console.error("Failed to create tenant:", error)
+      // You could add a toast notification here to show the error
     }
   }
 
   const currentTags = form.watch("bh_tags")
+
+  if (creationSuccessData) {
+    const copyToClipboard = (text: string) => {
+      navigator.clipboard.writeText(text)
+      // You could show a "Copied!" toast notification here
+    }
+
+    return (
+      <div className="flex flex-col items-center text-center p-4 sm:p-6">
+        <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+        <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Tenant Created!</h3>
+        <p className="text-muted-foreground mt-2 mb-6">
+          The tenant has been successfully onboarded. Here are the admin credentials.
+        </p>
+
+        <div className="w-full max-w-md space-y-4 rounded-lg border bg-slate-50 dark:bg-slate-800/50 p-6 text-left">
+          <div className="flex justify-between items-center">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Username</label>
+              <p className="font-mono text-lg">{creationSuccessData.username}</p>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => copyToClipboard(creationSuccessData.username)}>
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
+          {creationSuccessData.password && (
+            <div className="flex justify-between items-center">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Password</label>
+                <p className="font-mono text-lg">{creationSuccessData.password}</p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => copyToClipboard(creationSuccessData.password!)}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="w-full max-w-md mt-6 space-y-3">
+          <a href={creationSuccessData.login_url} target="_blank" rel="noopener noreferrer" className="block">
+            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Go to Login Page
+            </Button>
+          </a>
+          <Button variant="outline" className="w-full" onClick={() => setCreationSuccessData(null)}>
+            Create Another Tenant
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <Form {...form}>
@@ -261,15 +350,21 @@ export function TenantOnboardingForm() {
                       <FormItem>
                         <FormLabel className="text-slate-700 dark:text-slate-300 font-medium">Tags</FormLabel>
                         <FormDescription className="text-slate-500 dark:text-slate-400">
-                          Add tags to categorize and organize this tenant
+                          Add key-value tags to categorize and organize this tenant
                         </FormDescription>
                         <div className="space-y-3">
                           {/* Tag Input */}
-                          <div className="flex gap-2">
+                          <div className="flex items-start gap-2">
                             <Input
-                              placeholder="Enter a tag..."
-                              value={tagInput}
-                              onChange={(e) => setTagInput(e.target.value)}
+                              placeholder="Tag key (e.g., 'department')"
+                              value={tagKeyInput}
+                              onChange={(e) => setTagKeyInput(e.target.value)}
+                              className="flex-1 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+                            />
+                            <Input
+                              placeholder="Tag value (e.g., 'Engineering')"
+                              value={tagValueInput}
+                              onChange={(e) => setTagValueInput(e.target.value)}
                               onKeyDown={handleTagInputKeyDown}
                               className="flex-1 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                             />
@@ -278,26 +373,27 @@ export function TenantOnboardingForm() {
                               variant="outline"
                               size="icon"
                               onClick={addTag}
-                              disabled={!tagInput.trim()}
-                              className="border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-300 dark:hover:border-blue-700 transition-colors bg-transparent"
+                              disabled={!tagKeyInput.trim() || !tagValueInput.trim()}
+                              className="border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-300 dark:hover:border-blue-700 transition-colors bg-transparent shrink-0"
                             >
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
 
                           {/* Display Tags */}
-                          {Object.keys(currentTags).length > 0 && (
+                          {currentTags.length > 0 && (
                             <div className="flex flex-wrap gap-2">
-                              {Object.entries(currentTags).map(([key, value]) => (
+                              {currentTags.map((tag) => (
                                 <Badge
-                                  key={key}
+                                  key={tag.key}
                                   variant="secondary"
-                                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                                 >
-                                  <span className="font-medium">{value}</span>
+                                  <span className="font-semibold">{tag.key}:</span>
+                                  <span className="font-normal">{tag.value}</span>
                                   <button
                                     type="button"
-                                    onClick={() => removeTag(key)}
+                                    onClick={() => removeTag(tag.key)}
                                     className="ml-1 hover:bg-red-500/20 rounded-full p-0.5 transition-colors group"
                                   >
                                     <X className="h-3 w-3 text-blue-600 dark:text-blue-300 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" />
@@ -307,11 +403,11 @@ export function TenantOnboardingForm() {
                             </div>
                           )}
 
-                          {Object.keys(currentTags).length === 0 && (
+                          {currentTags.length === 0 && (
                             <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
                               <p className="text-sm text-slate-500 dark:text-slate-400">No tags added yet</p>
                               <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                                Type a tag name and press Enter
+                                Enter a key and value, then press Enter or click the add button
                               </p>
                             </div>
                           )}
@@ -334,7 +430,8 @@ export function TenantOnboardingForm() {
             size="icon"
             onClick={() => {
               form.reset()
-              setTagInput("")
+              setTagKeyInput("")
+              setTagValueInput("")
             }}
             className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors h-10 w-10"
             title="Reset form"

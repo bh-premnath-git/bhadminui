@@ -23,8 +23,10 @@ export interface UpdateUserRequest extends Partial<CreateUserRequest> {
 }
 
 export interface UserFilters {
-  role?: User["role"]
-  status?: User["status"]
-  tenant_id?: string
   search?: string
+  role?: "admin" | "user" | "viewer"
+  status?: "active" | "pending" | "inactive"
+  tenant_id?: string
+  limit?: number
+  offset?: number
 }

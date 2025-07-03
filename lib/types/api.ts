@@ -4,13 +4,13 @@ export interface ApiResponse<T = any> {
   success: boolean
 }
 
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
+export interface PaginatedResponse<T> {
+  total: number
+  next: boolean
+  prev: boolean
+  offset: number
+  limit: number
+  data: T[]
 }
 
 export interface ApiError {
@@ -23,4 +23,8 @@ export interface BaseEntity {
   id: string
   createdAt: string
   updatedAt: string
+  created_by: string
+  updated_by: string | null
+  is_deleted: boolean
+  deleted_by: string | null
 }

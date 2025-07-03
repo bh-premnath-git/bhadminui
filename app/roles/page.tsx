@@ -16,24 +16,34 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useRouter } from "next/navigation"
 import type { RoleFilters } from "@/lib/types/role"
 
+const PAGE_SIZE = 6
+
 export default function RolesPage() {
   const dispatch = useAppDispatch()
   const router = useRouter()
 
   const [filters, setFilters] = useState<RoleFilters>({})
-  const { data: rolesResponse, isLoading: loading, error } = useGetRolesQuery(filters)
+  const [offset, setOffset] = useState(0)
+  const { data: rolesResponse, isLoading: loading, error } = useGetRolesQuery({
+    ...filters,
+    limit: PAGE_SIZE,
+    offset,
+  })
   const { data: tenantsResponse } = useGetTenantsQuery()
   const [deleteRole] = useDeleteRoleMutation()
 
   const handleSearchChange = (search: string) => {
+    setOffset(0)
     setFilters({ ...filters, search })
   }
 
   const handleStatusFilter = (status: string) => {
+    setOffset(0)
     setFilters({ ...filters, status: status === "all" ? undefined : (status as any) })
   }
 
   const handleTenantFilter = (tenantId: string) => {
+    setOffset(0)
     setFilters({ ...filters, tenant_id: tenantId === "all" ? undefined : tenantId })
   }
 
@@ -44,6 +54,18 @@ export default function RolesPage() {
     } catch (err) {
       // Optionally show an error toast
       console.error("Failed to delete the role: ", err)
+    }
+  }
+
+  const handleNextPage = () => {
+    if (rolesResponse?.next) {
+      setOffset(offset + PAGE_SIZE)
+    }
+  }
+
+  const handlePrevPage = () => {
+    if (rolesResponse?.prev) {
+      setOffset(offset - PAGE_SIZE)
     }
   }
 
@@ -344,6 +366,22 @@ export default function RolesPage() {
           </Card>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {rolesResponse && rolesResponse.total > PAGE_SIZE && (
+        <div className="flex justify-end items-center gap-4 mt-6">
+          <span className="text-sm text-muted-foreground">
+            Showing {Math.min(offset + 1, rolesResponse.total)}-{Math.min(offset + PAGE_SIZE, rolesResponse.total)} of{" "}
+            {rolesResponse.total}
+          </span>
+          <Button variant="outline" onClick={handlePrevPage} disabled={!rolesResponse?.prev}>
+            Previous
+          </Button>
+          <Button variant="outline" onClick={handleNextPage} disabled={!rolesResponse?.next}>
+            Next
+          </Button>
+        </div>
+      )}
 
       {rolesResponse?.data.length === 0 && (
         <Card className="border-dashed border-2 border-slate-300 dark:border-slate-600">

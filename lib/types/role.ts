@@ -27,4 +27,6 @@ export interface RoleFilters {
   status?: Role["status"]
   search?: string
   tenant_id?: string // for filtering by specific tenant or "global"
+  limit?: number
+  offset?: number
 }

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useGetTenantByIdQuery } from "@/lib/services/tenant-api-service"
+import { useGetTenantByNameQuery } from "@/lib/services/tenant-api-service"
 import {
   ArrowLeft,
   Building2,
@@ -15,20 +15,20 @@ import {
   Calendar,
   Edit,
   Trash2,
-  Users,
   Shield,
   Settings,
-  Activity,
+  ExternalLink,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 export default function TenantDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const tenantId = params.id as string
+  const tenantName = params.id as string
 
-  const { data: tenantResponse, isLoading: loading, error } = useGetTenantByIdQuery(tenantId, {
-    skip: !tenantId,
+  const { data: tenantResponse, isLoading: loading, error } = useGetTenantByNameQuery(tenantName, {
+    skip: !tenantName,
   })
 
   const currentTenant = tenantResponse
@@ -85,6 +85,8 @@ export default function TenantDetailPage() {
     )
   }
 
+  const appUrl = `${process.env.NEXT_PUBLIC_UI_APP_URL}?kc_realm_id=${currentTenant.kc_realm_id}&kc_client_id=${currentTenant.kc_client_id}&client_key=${currentTenant.client_key}`
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -112,8 +114,8 @@ export default function TenantDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className={`${getStatusColor(currentTenant.status)} font-medium px-3 py-1 text-sm border`}>
-            {currentTenant.status}
+          <Badge className={`${getStatusColor(currentTenant.tenant_status)} font-medium px-3 py-1 text-sm border`}>
+            {currentTenant.tenant_status}
           </Badge>
           <TooltipProvider>
             <Tooltip>
@@ -172,8 +174,8 @@ export default function TenantDetailPage() {
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Status</label>
                   <div className="mt-1">
-                    <Badge className={`${getStatusColor(currentTenant.status)} font-medium px-2 py-1 text-xs border`}>
-                      {currentTenant.status}
+                    <Badge className={`${getStatusColor(currentTenant.tenant_status)} font-medium px-2 py-1 text-xs border`}>
+                      {currentTenant.tenant_status}
                     </Badge>
                   </div>
                 </div>
@@ -196,16 +198,10 @@ export default function TenantDetailPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Primary Contact</label>
-                  <p className="text-sm font-semibold">
-                    {currentTenant.first_name} {currentTenant.last_name}
-                  </p>
-                </div>
-                <div>
                   <label className="text-sm font-medium text-muted-foreground">Email Address</label>
                   <div className="flex items-center gap-2 mt-1">
                     <Mail className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm">{currentTenant.email}</p>
+                    <p className="text-sm">{currentTenant.created_by}</p>
                   </div>
                 </div>
               </div>
@@ -221,15 +217,15 @@ export default function TenantDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {Object.keys(currentTenant.bh_tags).length > 0 ? (
+              {currentTenant.bh_tags.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(currentTenant.bh_tags).map(([key, value]) => (
+                  {currentTenant.bh_tags.map((tag) => (
                     <Badge
-                      key={key}
+                      key={tag.key}
                       variant="outline"
                       className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
                     >
-                      <span className="font-medium">{value}</span>
+                      <span className="font-semibold">{tag.key}:</span>&nbsp;<span>{tag.value}</span>
                     </Badge>
                   ))}
                 </div>
@@ -238,40 +234,38 @@ export default function TenantDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Technical Configuration */}
+          <Accordion type="single" collapsible className="w-full rounded-lg border px-4">
+            <AccordionItem value="tech-config">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-gray-600" />
+                  <span className="font-medium text-base">Technical Configuration</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 pt-2">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Keycloak Realm ID</label>
+                    <p className="text-sm font-mono bg-muted px-2 py-1 rounded mt-1">{currentTenant.kc_realm_id}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Keycloak Client ID</label>
+                    <p className="text-sm font-mono bg-muted px-2 py-1 rounded mt-1">{currentTenant.kc_client_id}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Client Key</label>
+                    <p className="text-sm font-mono bg-muted px-2 py-1 rounded mt-1">{currentTenant.client_key}</p>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Quick Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Stats</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium">Active Users</span>
-                </div>
-                <span className="text-lg font-bold text-blue-600">12</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium">Roles</span>
-                </div>
-                <span className="text-lg font-bold text-purple-600">4</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium">Last Activity</span>
-                </div>
-                <span className="text-sm font-medium text-green-600">2 hours ago</span>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Timestamps */}
           <Card>
             <CardHeader>
@@ -319,17 +313,15 @@ export default function TenantDetailPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
+              <Button asChild variant="outline" className="w-full justify-start bg-transparent">
+                <a href={appUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open Tenant App
+                </a>
+              </Button>
               <Button variant="outline" className="w-full justify-start bg-transparent" onClick={handleEdit}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Tenant
-              </Button>
-              <Button variant="outline" className="w-full justify-start bg-transparent">
-                <Users className="h-4 w-4 mr-2" />
-                Manage Users
-              </Button>
-              <Button variant="outline" className="w-full justify-start bg-transparent">
-                <Shield className="h-4 w-4 mr-2" />
-                Manage Roles
               </Button>
               <Button
                 variant="outline"

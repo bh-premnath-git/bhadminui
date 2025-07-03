@@ -103,25 +103,43 @@ const dummyRoles: Role[] = [
 export const roleApiSlice = apiService.injectEndpoints({
   endpoints: (builder) => ({
     getRoles: builder.query<PaginatedResponse<Role>, RoleFilters | void>({
-      queryFn: async (filters) => {
-        await new Promise((resolve) => setTimeout(resolve, 500))
+      queryFn: (arg) => {
+        const filters = arg || {}
         let roles = [...dummyRoles]
-        if (filters && 'search' in filters && typeof filters.search === 'string') {
-          const search = filters.search.toLowerCase()
+        const { search, status, tenant_id, limit = 10, offset = 0 } = filters
+
+        if (search) {
+          const lowercasedSearch = search.toLowerCase()
           roles = roles.filter(
-            (r) => r.name.toLowerCase().includes(search) || r.description.toLowerCase().includes(search),
+            (r) =>
+              r.name.toLowerCase().includes(lowercasedSearch) ||
+              r.description.toLowerCase().includes(lowercasedSearch) ||
+              (r.tenant && r.tenant.name.toLowerCase().includes(lowercasedSearch)),
           )
         }
+
+        if (status) {
+          roles = roles.filter((r) => r.status === status)
+        }
+
+        if (tenant_id) {
+          if (tenant_id === "global") {
+            roles = roles.filter((r) => !r.tenant)
+          } else {
+            roles = roles.filter((r) => r.tenant?.id === tenant_id)
+          }
+        }
+
+        const total = roles.length
+        const data = roles.slice(offset, offset + limit)
+
         const response: PaginatedResponse<Role> = {
-          data: roles,
-          message: "Roles retrieved successfully",
-          success: true,
-          pagination: {
-            page: 1,
-            limit: 10,
-            total: roles.length,
-            totalPages: Math.ceil(roles.length / 10),
-          },
+          total,
+          next: offset + limit < total,
+          prev: offset > 0,
+          offset,
+          limit,
+          data,
         }
         return { data: response }
       },

@@ -53,37 +53,39 @@ const dummyUsers: User[] = [
   },
 ]
 
-const getFilteredUsers = (filters?: UserFilters): PaginatedResponse<User> => {
+// Helper function to filter users based on query parameters
+function getFilteredUsers(filters: UserFilters = {}): PaginatedResponse<User> {
   let filteredUsers = [...dummyUsers]
-  if (filters?.role) {
-    filteredUsers = filteredUsers.filter((u) => u.role === filters.role)
-  }
-  if (filters?.status) {
-    filteredUsers = filteredUsers.filter((u) => u.status === filters.status)
-  }
-  if (filters?.tenant_id) {
-    filteredUsers = filteredUsers.filter((u) => u.tenant_id === filters.tenant_id)
-  }
-  if (filters?.search) {
-    const search = filters.search.toLowerCase()
+  const { search, role, status, limit = 10, offset = 0 } = filters
+
+  if (search) {
+    const lowercasedSearch = search.toLowerCase()
     filteredUsers = filteredUsers.filter(
       (u) =>
-        u.email.toLowerCase().includes(search) ||
-        u.first_name.toLowerCase().includes(search) ||
-        u.last_name.toLowerCase().includes(search),
+        u.first_name.toLowerCase().includes(lowercasedSearch) ||
+        u.last_name.toLowerCase().includes(lowercasedSearch) ||
+        u.email.toLowerCase().includes(lowercasedSearch),
     )
   }
 
+  if (role) {
+    filteredUsers = filteredUsers.filter((u) => u.role === role)
+  }
+
+  if (status) {
+    filteredUsers = filteredUsers.filter((u) => u.status === status)
+  }
+
+  const total = filteredUsers.length
+  const data = filteredUsers.slice(offset, offset + limit)
+
   return {
-    data: filteredUsers,
-    message: "Users retrieved successfully",
-    success: true,
-    pagination: {
-      page: 1,
-      limit: 10,
-      total: filteredUsers.length,
-      totalPages: Math.ceil(filteredUsers.length / 10),
-    },
+    total,
+    next: offset + limit < total,
+    prev: offset > 0,
+    offset,
+    limit,
+    data,
   }
 }
 

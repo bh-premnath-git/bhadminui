@@ -7,6 +7,7 @@ import {
   setKeycloak,
   setAuthenticated,
   setToken,
+  generateToken,
 } from "@/lib/features/auth/auth-slice"
 import type { AppDispatch } from "@/lib/store"
 import { LazyLoading } from "./LazyLoading"
@@ -27,11 +28,12 @@ export function KeycloakProvider({ children }: KeycloakProviderProps) {
     kcInstance
       .init({ onLoad: "login-required" })
       .then((auth) => {
-        console.log("KeycloakProvider: Auth success! Token:", kcInstance.token)
         dispatch(setAuthenticated(auth))
-        dispatch(
-          setToken({ token: kcInstance.token, tokenParsed: kcInstance.tokenParsed })
-        )
+        const token = kcInstance.token
+        dispatch(setToken({ token, tokenParsed: kcInstance.tokenParsed }))
+        if (auth) {
+          dispatch(generateToken(token))
+        }
       })
       .catch((error) => {
         console.error("Keycloak init failed:", error)
@@ -43,9 +45,9 @@ export function KeycloakProvider({ children }: KeycloakProviderProps) {
 
     kcInstance.onAuthSuccess = () => {
       dispatch(setAuthenticated(true))
-      dispatch(
-        setToken({ token: kcInstance.token, tokenParsed: kcInstance.tokenParsed })
-      )
+      const token = kcInstance.token
+      dispatch(setToken({ token, tokenParsed: kcInstance.tokenParsed }))
+      dispatch(generateToken(token))
     }
 
     kcInstance.onAuthError = (errorData) => {
