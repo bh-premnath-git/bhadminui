@@ -1,13 +1,15 @@
 "use client"
-import { Building2, Moon, Sun, BarChart2 } from "lucide-react"
+import { Building2, Moon, Sun, BarChart2, LogOut } from "lucide-react"
 import type React from "react"
 
 import { useTheme } from "next-themes"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useDispatch } from "react-redux"
 
 import { Switch } from "@/components/ui/switch"
+import { Button } from "@/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
@@ -29,6 +31,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
+import { logout } from "@/lib/features/auth/auth-slice"
+import type { AppDispatch } from "@/lib/store"
 
 const navigationItems = [
   {
@@ -48,6 +52,7 @@ export function AdminSidebar() {
   const { state } = useSidebar()
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
+  const dispatch: AppDispatch = useDispatch()
 
   // Ensure theme is mounted to avoid hydration mismatch
   useEffect(() => {
@@ -57,6 +62,10 @@ export function AdminSidebar() {
   const handleThemeToggle = () => {
     const newTheme = theme === "dark" ? "light" : "dark"
     setTheme(newTheme)
+  }
+
+  const handleLogout = () => {
+    dispatch(logout())
   }
 
   // Don't render until mounted to avoid hydration mismatch
@@ -196,6 +205,12 @@ export function AdminSidebar() {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+          </div>
+          <div className="p-3">
+            <Button onClick={handleLogout} variant="destructive">
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
       </SidebarFooter>
