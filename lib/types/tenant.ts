@@ -1,8 +1,8 @@
 import type { BaseEntity } from "./api"
 
 export interface Tag {
-  key: string
-  value: string
+  Key: string
+  Value: string
 }
 
 export interface Tenant extends BaseEntity {
@@ -14,6 +14,7 @@ export interface Tenant extends BaseEntity {
   tenant_status: "active" | "inactive"
   kc_realm_id: string
   kc_client_id: string
+  login_url?: string
   client_key: string
 }
 

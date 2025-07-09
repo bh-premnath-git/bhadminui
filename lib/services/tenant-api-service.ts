@@ -23,7 +23,7 @@ export const tenantApiSlice = apiService.injectEndpoints({
     getTenantByName: builder.query<Tenant, string>({
       query: (name) => ({
         url: "tenants",
-        params: { tenant_name: name, limit: 1 },
+        params: { id: name, limit: 1 },
       }),
       transformResponse: (response: PaginatedResponse<Tenant>) => {
         if (response.data && response.data.length > 0) {
@@ -35,15 +35,10 @@ export const tenantApiSlice = apiService.injectEndpoints({
     }),
     createTenant: builder.mutation<TenantCreationSuccessData, CreateTenantRequest>({
       query: (data) => {
-        const { bh_tags, ...rest } = data
-        const payload = {
-          ...rest,
-          bh_tags: JSON.stringify(bh_tags),
-        }
         return {
           url: `tenants`,
           method: "POST",
-          body: payload,
+          body: data,
         }
       },
       transformResponse: (response: TenantCreationSuccessData) => response,

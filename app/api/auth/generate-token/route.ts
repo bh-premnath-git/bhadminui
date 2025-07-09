@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         realm: "master",
-        username: "bighammer-admin",
-        password: "password123",
+        username: "admin",
+        password: "password",
         client_id: "bighammer-admin",
       }),
     });

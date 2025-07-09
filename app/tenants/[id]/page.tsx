@@ -47,6 +47,19 @@ export default function TenantDetailPage() {
     console.log("Delete tenant:", currentTenant?.id)
   }
 
+  // Function to extract tenant identifier from login URL and construct admin URL
+  const getAdminUrl = (loginUrl: string): string => {
+    try {
+      const url = new URL(loginUrl)
+      const pathSegments = url.pathname.split('/').filter(segment => segment.length > 0)
+      const tenantId = pathSegments[pathSegments.length - 1] // Get the last segment
+      return `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}/admin/${tenantId}/console/`
+    } catch (error) {
+      console.error('Error parsing login URL:', error)
+      return loginUrl // Fallback to original URL if parsing fails
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex-1 space-y-6 p-6">
@@ -221,11 +234,11 @@ export default function TenantDetailPage() {
                 <div className="flex flex-wrap gap-2">
                   {currentTenant.bh_tags.map((tag) => (
                     <Badge
-                      key={tag.key}
+                      key={tag.Key}
                       variant="outline"
                       className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
                     >
-                      <span className="font-semibold">{tag.key}:</span>&nbsp;<span>{tag.value}</span>
+                      <span className="font-semibold">{tag.Key}:</span>&nbsp;<span>{tag.Value}</span>
                     </Badge>
                   ))}
                 </div>
@@ -259,6 +272,17 @@ export default function TenantDetailPage() {
                     <p className="text-sm font-mono bg-muted px-2 py-1 rounded mt-1">{currentTenant.client_key}</p>
                   </div>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Login URL</label>
+                  <a 
+                    href={getAdminUrl(currentTenant.login_url ?? "")} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm font-mono bg-muted px-2 py-1 rounded mt-1 block hover:bg-muted/80 transition-colors text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    Admin URL
+                  </a>
+                </div> 
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -278,7 +302,7 @@ export default function TenantDetailPage() {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Created</label>
                 <p className="text-sm">
-                  {new Date(currentTenant.createdAt).toLocaleDateString("en-US", {
+                  {new Date(currentTenant.created_at).toLocaleDateString("en-US", {
                     weekday: "long",
                     year: "numeric",
                     month: "long",
@@ -291,7 +315,7 @@ export default function TenantDetailPage() {
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Last Updated</label>
                 <p className="text-sm">
-                  {new Date(currentTenant.updatedAt).toLocaleDateString("en-US", {
+                  {new Date(currentTenant.updated_at).toLocaleDateString("en-US", {
                     weekday: "long",
                     year: "numeric",
                     month: "long",

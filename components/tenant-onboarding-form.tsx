@@ -26,8 +26,8 @@ const formSchema = z.object({
   last_name: z.string().min(2, "Last name must be at least 2 characters"),
   bh_tags: z.array(
     z.object({
-      key: z.string().min(1, "Tag key cannot be empty"),
-      value: z.string().min(1, "Tag value cannot be empty"),
+      Key: z.string().min(1, "Tag key cannot be empty"),
+      Value: z.string().min(1, "Tag value cannot be empty"),
     }),
   ),
 })
@@ -46,6 +46,7 @@ export function TenantOnboardingForm() {
   const [tagValueInput, setTagValueInput] = useState("")
   const [openSections, setOpenSections] = useState<string[]>(["basic"])
   const [creationSuccessData, setCreationSuccessData] = useState<TenantCreationSuccessData | null>(null)
+  const [copiedItem, setCopiedItem] = useState<string | null>(null)
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -69,13 +70,13 @@ export function TenantOnboardingForm() {
     if (!key || !value) return
 
     const currentTags = form.getValues("bh_tags")
-    if (currentTags.some((tag) => tag.key === key)) {
+    if (currentTags.some((tag) => tag.Key === key)) {
       form.setError("bh_tags", { type: "manual", message: "Tag keys must be unique." })
       return
     }
     form.clearErrors("bh_tags")
 
-    form.setValue("bh_tags", [...currentTags, { key, value }])
+    form.setValue("bh_tags", [...currentTags, { Key: key, Value: value }])
 
     setTagKeyInput("")
     setTagValueInput("")
@@ -85,7 +86,7 @@ export function TenantOnboardingForm() {
     const currentTags = form.getValues("bh_tags")
     form.setValue(
       "bh_tags",
-      currentTags.filter((tag) => tag.key !== keyToRemove),
+      currentTags.filter((tag) => tag.Key !== keyToRemove),
     )
   }
 
@@ -104,7 +105,7 @@ export function TenantOnboardingForm() {
       let finalData = data
 
       if (key && value) {
-        if (data.bh_tags.some((tag) => tag.key === key)) {
+        if (data.bh_tags.some((tag) => tag.Key === key)) {
           form.setError("bh_tags", {
             type: "manual",
             message: "You have an un-added tag with a duplicate key. Please resolve it before submitting.",
@@ -113,7 +114,7 @@ export function TenantOnboardingForm() {
         }
         finalData = {
           ...data,
-          bh_tags: [...data.bh_tags, { key, value }],
+          bh_tags: [...data.bh_tags, { Key: key, Value: value }],
         }
       }
 
@@ -133,9 +134,28 @@ export function TenantOnboardingForm() {
   const currentTags = form.watch("bh_tags")
 
   if (creationSuccessData) {
-    const copyToClipboard = (text: string) => {
-      navigator.clipboard.writeText(text)
-      // You could show a "Copied!" toast notification here
+    const copyToClipboard = async (text: string, itemType: string) => {
+      try {
+        await navigator.clipboard.writeText(text)
+        setCopiedItem(itemType)
+        // Clear the copied state after 2 seconds
+        setTimeout(() => setCopiedItem(null), 2000)
+      } catch (error) {
+        console.error('Failed to copy to clipboard:', error)
+        // Fallback for older browsers or when clipboard API fails
+        const textArea = document.createElement('textarea')
+        textArea.value = text
+        document.body.appendChild(textArea)
+        textArea.select()
+        try {
+          document.execCommand('copy')
+          setCopiedItem(itemType)
+          setTimeout(() => setCopiedItem(null), 2000)
+        } catch (fallbackError) {
+          console.error('Fallback copy failed:', fallbackError)
+        }
+        document.body.removeChild(textArea)
+      }
     }
 
     return (
@@ -152,8 +172,17 @@ export function TenantOnboardingForm() {
               <label className="text-sm font-medium text-muted-foreground">Username</label>
               <p className="font-mono text-lg">{creationSuccessData.username}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => copyToClipboard(creationSuccessData.username)}>
-              <Copy className="h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => copyToClipboard(creationSuccessData.username, 'username')}
+              className="relative"
+            >
+              {copiedItem === 'username' ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
             </Button>
           </div>
           {creationSuccessData.password && (
@@ -162,8 +191,17 @@ export function TenantOnboardingForm() {
                 <label className="text-sm font-medium text-muted-foreground">Password</label>
                 <p className="font-mono text-lg">{creationSuccessData.password}</p>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => copyToClipboard(creationSuccessData.password!)}>
-                <Copy className="h-4 w-4" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => copyToClipboard(creationSuccessData.password!, 'password')}
+                className="relative"
+              >
+                {copiedItem === 'password' ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </Button>
             </div>
           )}
@@ -385,15 +423,18 @@ export function TenantOnboardingForm() {
                             <div className="flex flex-wrap gap-2">
                               {currentTags.map((tag) => (
                                 <Badge
-                                  key={tag.key}
+                                  key={tag.Key}
                                   variant="secondary"
                                   className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                                 >
-                                  <span className="font-semibold">{tag.key}:</span>
-                                  <span className="font-normal">{tag.value}</span>
+                                  <span className="font-semibold">Key:</span>
+                                  <span className="font-normal">{tag.Key}</span>
+                                  <span className="mx-1">/</span>
+                                  <span className="font-semibold">Value:</span>
+                                  <span className="font-normal">{tag.Value}</span>
                                   <button
                                     type="button"
-                                    onClick={() => removeTag(tag.key)}
+                                    onClick={() => removeTag(tag.Key)}
                                     className="ml-1 hover:bg-red-500/20 rounded-full p-0.5 transition-colors group"
                                   >
                                     <X className="h-3 w-3 text-blue-600 dark:text-blue-300 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" />
@@ -440,10 +481,10 @@ export function TenantOnboardingForm() {
           </Button>
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !form.formState.isValid}
             size="icon"
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 h-10 w-10"
-            title={isLoading ? "Creating tenant..." : "Create tenant"}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 h-10 w-10 disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isLoading ? "Creating tenant..." : !form.formState.isValid ? "Please fill all required fields" : "Create tenant"}
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           </Button>

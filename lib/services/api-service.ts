@@ -4,7 +4,7 @@ import type { RootState } from "../store"
 const baseQuery = fetchBaseQuery({
   baseUrl: "/api",
   prepareHeaders: (headers, { getState }) => {
-    const token = (getState() as RootState).auth.clienttoken
+    const token = (getState() as RootState).auth.clienttoken ?? (getState() as RootState).auth.token
     if (token) {
       headers.set("authorization", `Bearer ${token}`)
     }

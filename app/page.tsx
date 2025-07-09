@@ -3,25 +3,42 @@ import { useMemo } from "react"
 import { RecentActivities,  type Activity  } from "@/components/recent-activities"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useGetTenantsQuery } from "@/lib/services/tenant-api-service"
-import { useGetUsersQuery } from "@/lib/services/user-api-service"
-import { Building2, User } from "lucide-react"
+import { Building2 } from "lucide-react"
 
 export default function HomePage() {
   const { data: tenantsResponse } = useGetTenantsQuery()
-  const { data: usersResponse } = useGetUsersQuery()
 
   const tenants = tenantsResponse?.data ?? []
-  const users = usersResponse?.data ?? []
 
-  const activeTenants = tenants.filter((t) => t.status === "active").length
-  const pendingTenants = tenants.filter((t) => t.status === "pending").length
+  const activeTenants = tenants.filter((t) => t.tenant_status === "active").length
+  const pendingTenants = tenants.filter((t) => t.tenant_status === "inactive").length
   const tenantsThisMonth = tenants.filter((t) => {
-    const created = new Date(t.createdAt)
-    const now = new Date()
-    return (
-      created.getMonth() === now.getMonth() &&
-      created.getFullYear() === now.getFullYear()
-    )
+    if (!t.created_at) return false
+    try {
+      // Handle both ISO string format and other common formats
+      const created = new Date(t.created_at)
+      const now = new Date()
+      
+      // Check if the date is valid
+      if (isNaN(created.getTime())) {
+        console.warn(`Invalid date format for tenant ${t.id}: ${t.created_at}`)
+        return false
+      }
+      
+      // Compare using UTC to avoid timezone issues
+      const createdUTC = new Date(created.getUTCFullYear(), created.getUTCMonth(), created.getUTCDate())
+      const nowUTC = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+      
+      console.log(`Tenant ${t.id}: Created ${createdUTC.toISOString().split('T')[0]}, Now ${nowUTC.toISOString().split('T')[0]}`)
+      
+      return (
+        createdUTC.getMonth() === nowUTC.getMonth() &&
+        createdUTC.getFullYear() === nowUTC.getFullYear()
+      )
+    } catch (error) {
+      console.warn(`Error parsing date for tenant ${t.id}:`, error)
+      return false
+    }
   }).length
 
   const activities: Activity[] = useMemo(() => {
@@ -30,25 +47,14 @@ export default function HomePage() {
       type: "tenant_created",
       title: `Tenant created: ${t.tenant_name}`,
       description: t.tenant_description,
-      timestamp: t.createdAt,
+      timestamp: t.created_at,
       status: "completed",
-      icon: Building2,
-      user: `${t.first_name} ${t.last_name}`,
+      icon: Building2
     }))
-    const userActs = users.map((u) => ({
-      id: `user-${u.id}`,
-      type: "user_created",
-      title: `User created: ${u.first_name} ${u.last_name}`,
-      description: u.email,
-      timestamp: u.createdAt,
-      status: "completed",
-      icon: User,
-      user: `${u.first_name} ${u.last_name}`,
-    }))
-    return [...tenantActs, ...userActs].sort(
+    return [...tenantActs].sort(
       (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     )
-  }, [tenants, users])
+  }, [tenants])
 
   return (
       <div className="flex-1 space-y-6 p-6">

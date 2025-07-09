@@ -1,6 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export interface Activity {
   id: string | number
@@ -10,7 +9,6 @@ export interface Activity {
   timestamp: string
   status: string
   icon: React.ComponentType<{ className?: string }>
-  user: string
 }
 
 const defaultActivities: Activity[] = []
@@ -61,15 +59,7 @@ export function RecentActivities({ activities = defaultActivities, limit = 4 }: 
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{activity.description}</p>
-                    <div className="flex items-center mt-1 space-x-2">
-                      <Avatar className="h-4 w-4">
-                        <AvatarImage src="/placeholder-user.jpg" />
-                        <AvatarFallback className="text-xs">AU</AvatarFallback>
-                      </Avatar>
-                      <span className="text-xs text-muted-foreground">
-                        {activity.user} • {activity.timestamp}
-                      </span>
-                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
                   </div>
                 </div>
               )

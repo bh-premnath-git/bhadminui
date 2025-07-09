@@ -229,14 +229,7 @@ export default function TenantsPage() {
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col justify-between space-y-4">
-              {/* Contact Information */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                  <Mail className="h-4 w-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
-                  <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{tenant.created_by}</span>
-                </div>
-              </div>
-
+             
               {/* Tags Section */}
               <div className="space-y-2">
                 {tenant.bh_tags.length > 0 ? (
@@ -250,11 +243,11 @@ export default function TenantsPage() {
                         .slice(0, 3)
                         .map((tag) => (
                           <Badge
-                            key={tag.key}
+                            key={tag.Key}
                             variant="outline"
                             className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                           >
-                            <span className="font-semibold">{tag.key}:</span>&nbsp;{truncateText(tag.value, 12)}
+                            <span className="font-semibold">{tag.Key}:</span>&nbsp;{truncateText(tag.Value, 12)}
                           </Badge>
                         ))}
                       {tenant.bh_tags.length > 3 && (
@@ -279,7 +272,7 @@ export default function TenantsPage() {
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Created{" "}
-                  {new Date(tenant.createdAt).toLocaleDateString("en-US", {
+                  {new Date(tenant.created_at).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
                     year: "numeric",

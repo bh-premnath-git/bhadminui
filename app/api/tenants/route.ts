@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-
+export const dynamic = "force-dynamic"
 export async function GET(request: NextRequest) {
     const authorization = request.headers.get("authorization")
-    console.log("Authorization:", authorization)
     if (!authorization) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
                 Authorization: authorization,
             },
         })
-
+debugger
         const data = await response.json()
 
         if (!response.ok) {

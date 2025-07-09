@@ -62,10 +62,18 @@ NEXT_PUBLIC_KEYCLOAK_URL=http://localhost:8080
 NEXT_PUBLIC_KEYCLOAK_REALM=master
 NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=bighammer-admin
 NEXT_PUBLIC_UI_REDIRECT_URL=http://localhost:5001
+NEXT_PUBLIC_UI_APP_URL=http://localhost:5000
 NEXT_API_PREFIX=/api/v1/
 NEXT_CATALOG_REMOTE_API_URL=http://localhost:8011
 NEXT_KEYCLOAK_API_REMOTE_URL=http://localhost:8005
 ```
+
+### Docker Setup
+
+To run the application using Docker, follow these steps:
+docker-compose up -d --build
+The application will be available at [http://localhost:5001](http://localhost:5001).
+
 
 ## Available Scripts
 

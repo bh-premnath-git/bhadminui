@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   title: "Tenant Onboarding Admin",
   description: "Admin dashboard for managing tenant onboarding",
   generator: "v0.dev",
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
+  },
 }
 
 export default function RootLayout({
