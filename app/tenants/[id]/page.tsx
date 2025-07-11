@@ -98,8 +98,6 @@ export default function TenantDetailPage() {
     )
   }
 
-  const appUrl = `${process.env.NEXT_PUBLIC_UI_APP_URL}?kc_realm_id=${currentTenant.kc_realm_id}&kc_client_id=${currentTenant.kc_client_id}&client_key=${currentTenant.client_key}`
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -338,7 +336,7 @@ export default function TenantDetailPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button asChild variant="outline" className="w-full justify-start bg-transparent">
-                <a href={appUrl} target="_blank" rel="noopener noreferrer">
+                <a href={currentTenant.login_url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Open Tenant App
                 </a>
