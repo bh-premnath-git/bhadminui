@@ -3,12 +3,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_KEYCLOAK_URL=${NEXT_PUBLIC_KEYCLOAK_URL}
+        - NEXT_PUBLIC_KEYCLOAK_REALM=${NEXT_PUBLIC_KEYCLOAK_REALM}
+        - NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${NEXT_PUBLIC_KEYCLOAK_CLIENT_ID}
+        - NEXT_PUBLIC_UI_REDIRECT_URL=${NEXT_PUBLIC_UI_REDIRECT_URL}
     ports:
       - "5001:5001"
     env_file:
       - .env
     volumes:
-      - .:/app
       - /app/node_modules
     networks:
       - shared_network
