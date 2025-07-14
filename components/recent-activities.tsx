@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { formatTimestamp } from "@/lib/formatedtime"
 
 export interface Activity {
   id: string | number
@@ -25,6 +26,7 @@ const getStatusColor = (status: string) => {
       return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
   }
 }
+
 
 interface RecentActivitiesProps {
   activities?: Activity[]
@@ -59,7 +61,7 @@ export function RecentActivities({ activities = defaultActivities, limit = 4 }: 
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{activity.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{formatTimestamp(activity.timestamp)}</p>
                   </div>
                 </div>
               )
