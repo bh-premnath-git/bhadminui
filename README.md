@@ -63,10 +63,8 @@ NEXT_PUBLIC_KEYCLOAK_REALM=master
 NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=bighammer-admin
 NEXT_PUBLIC_UI_REDIRECT_URL=http://localhost:5001
 NEXT_PUBLIC_UI_APP_URL=http://localhost:5000
-NEXT_API_PREFIX=/api/v1/
-NEXT_CATALOG_REMOTE_API_URL=http://localhost:8011
-NEXT_KEYCLOAK_API_REMOTE_URL=http://localhost:8005
-```
+NEXT_PUBLIC_API_PREFIX=/api/v1/
+NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=http://localhost:8005```
 
 ### Docker Setup
 
@@ -90,10 +88,3 @@ The application will be available at [http://localhost:5001](http://localhost:50
 - **`/public`:** Stores static assets like images and fonts.
 - **`/styles`:** Includes global CSS styles.
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a pull request or open an issue to discuss any changes.
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
