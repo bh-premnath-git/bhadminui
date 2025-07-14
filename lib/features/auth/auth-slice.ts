@@ -76,7 +76,7 @@ export const generateToken = createAsyncThunk(
     }
 
     try {
-      const response = await fetch("/api/auth/generate-token", {
+      const response = await fetch("/api/v1/bh-user/generate-token/", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
