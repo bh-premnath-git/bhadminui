@@ -76,7 +76,8 @@ export const generateToken = createAsyncThunk(
     }
 
     try {
-      const response = await fetch("/api/v1/bh-user/generate-token/", {
+      // Call your Next.js API route instead of external API
+      const response = await fetch("/api/auth/generate-token", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -33,6 +33,12 @@ export const tenantApiSlice = apiService.injectEndpoints({
       },
       providesTags: (_result, _error, name) => [{ type: "Tenant", id: name }],
     }),
+    getTenantById: builder.query<Tenant, string>({
+      query: (id) => ({
+        url: `tenants/${id}`,
+      }),
+      providesTags: (_result, _error, id) => [{ type: "Tenant", id }],
+    }),
     createTenant: builder.mutation<TenantCreationSuccessData, CreateTenantRequest>({
       query: (data) => {
         return {
@@ -58,6 +64,7 @@ export const tenantApiSlice = apiService.injectEndpoints({
 export const {
   useGetTenantsQuery,
   useGetTenantByNameQuery,
+  useGetTenantByIdQuery,
   useCreateTenantMutation,
   useUpdateTenantMutation,
   useDeleteTenantMutation,

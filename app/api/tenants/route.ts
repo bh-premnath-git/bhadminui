@@ -1,20 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
 export const dynamic = "force-dynamic"
+const apiUrl = process.env.NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL
+const apiPrefix = process.env.NEXT_PUBLIC_API_PREFIX
+
 export async function GET(request: NextRequest) {
+   
     const authorization = request.headers.get("authorization")
+   
     if (!authorization) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    }    
 
-    const apiUrl = process.env.NEXT_KEYCLOAK_API_REMOTE_URL
     if (!apiUrl) {
+        console.log("ERROR: API URL is not configured")
         return NextResponse.json({ error: "API URL is not configured" }, { status: 500 })
     }
 
     const { searchParams } = new URL(request.url)
-    const backendUrl = new URL(`${apiUrl}/bh-tenant/list/`)
+    const backendUrl = new URL(`${apiUrl}${apiPrefix}bh-tenant/list/`)
     backendUrl.search = searchParams.toString()
-
+    
     try {
         const response = await fetch(backendUrl.toString(), {
             method: "GET",
@@ -23,7 +28,6 @@ export async function GET(request: NextRequest) {
                 Authorization: authorization,
             },
         })
-debugger
         const data = await response.json()
 
         if (!response.ok) {
@@ -44,8 +48,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const apiUrl = process.env.NEXT_KEYCLOAK_API_REMOTE_URL
-
     if (!apiUrl) {
         return NextResponse.json({ error: "API URL is not configured" }, { status: 500 })
     }
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
             bh_tags: { data: bh_tags },
         }
 
-        const response = await fetch(`${apiUrl}/bh-tenant/`, {
+        const response = await fetch(`${apiUrl}${apiPrefix}bh-tenant`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

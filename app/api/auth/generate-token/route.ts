@@ -7,9 +7,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiUrl = process.env.NEXT_KEYCLOAK_API_REMOTE_URL;
+  const apiUrl = process.env.NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL;
+  const apiPrefix = process.env.NEXT_PUBLIC_API_PREFIX;
+
 
   if (!apiUrl) {
+    console.error("NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL is not set");
     return NextResponse.json(
       { error: "API URL is not configured" },
       { status: 500 }
@@ -17,7 +20,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(`${apiUrl}/bh-user/generate-token/`, {
+    const fullUrl = `${apiUrl}${apiPrefix}bh-user/generate-token/`;
+    const response = await fetch(fullUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

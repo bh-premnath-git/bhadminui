@@ -54,7 +54,16 @@ const tenantSlice = createSlice({
       .addMatcher(tenantApiSlice.endpoints.getTenants.matchFulfilled, (state, action) => {
         state.loading = false
         state.tenants = action.payload.data
-        state.pagination = action.payload.pagination
+        // Map PaginatedResponse properties to pagination state
+        const currentPage = Math.floor(action.payload.offset / action.payload.limit) + 1
+        const totalPages = Math.ceil(action.payload.total / action.payload.limit)
+        
+        state.pagination = {
+          page: currentPage,
+          limit: action.payload.limit,
+          total: action.payload.total,
+          totalPages: totalPages,
+        }
       })
       .addMatcher(tenantApiSlice.endpoints.getTenants.matchRejected, (state, action) => {
         state.loading = false
