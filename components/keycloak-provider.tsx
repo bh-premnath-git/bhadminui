@@ -28,17 +28,25 @@ export function KeycloakProvider({ children }: KeycloakProviderProps) {
     const initKeycloak = async () => {
       try {
         const auth = await kcInstance.init({ onLoad: "login-required" })
-        dispatch(setAuthenticated(auth))
+        if (!auth) {
+          // If not authenticated, trigger the login flow and keep loading state
+          await kcInstance.login()
+          return
+        }
+
+        // Authenticated
+        dispatch(setAuthenticated(true))
         const token = kcInstance.token
         dispatch(setToken({ token, tokenParsed: kcInstance.tokenParsed }))
-        if (auth) {
-          await dispatch(generateToken(token)).unwrap()
-        }
+        await dispatch(generateToken(token)).unwrap()
       } catch (error) {
         console.error("Keycloak init failed:", error)
         dispatch(setAuthenticated(false))
       } finally {
-        setIsLoading(false)
+        // Only stop loading if user is authenticated; otherwise the login redirect should occur
+        if (kcInstance.authenticated) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -49,6 +57,7 @@ export function KeycloakProvider({ children }: KeycloakProviderProps) {
       const token = kcInstance.token
       dispatch(setToken({ token, tokenParsed: kcInstance.tokenParsed }))
       dispatch(generateToken(token))
+      setIsLoading(false)
     }
 
     kcInstance.onAuthError = (errorData) => {
