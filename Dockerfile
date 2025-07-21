@@ -41,6 +41,9 @@ RUN npm install -g pm2
 # Copy built app and required files from builder
 COPY --from=builder /app /app
 
+# Ensure dotenv exists (in case prune removed it)
+RUN npm install --production --no-save dotenv
+
 # Expose your port
 EXPOSE 5001
 

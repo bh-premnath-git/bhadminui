@@ -2,11 +2,11 @@ module.exports = {
     apps: [
       {
         name: "next-app",
-        script: "node_modules/next/dist/bin/next",
-        args: "start -p 5001",
+        script: "node",
+        args: "server.js",
         cwd: "./",
         env: {
-          NODE_ENV: "production",
+          NODE_ENV: "development",
         },
       },
     ],
