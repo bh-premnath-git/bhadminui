@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logRequest } from "@/lib/utils/request-logger";
 
 export async function POST(request: NextRequest) {
+  logRequest(request);
   const authorization = request.headers.get("authorization");
 
   if (!authorization) {

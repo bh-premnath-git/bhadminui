@@ -21,6 +21,17 @@ const getKeycloakInstance = (): Keycloak => {
 
   if (!keycloakInstance) {
     keycloakInstance = new Keycloak(keycloakConfig);
+    const originalLogin = keycloakInstance.login.bind(keycloakInstance);
+    keycloakInstance.login = (...args: any[]) => {
+      console.log("[Keycloak] login called", args);
+      return originalLogin(...args);
+    };
+
+    const originalLogout = keycloakInstance.logout.bind(keycloakInstance);
+    keycloakInstance.logout = (...args: any[]) => {
+      console.log("[Keycloak] logout called", args);
+      return originalLogout(...args);
+    };
   }
   return keycloakInstance;
 };

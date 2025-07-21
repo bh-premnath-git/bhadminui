@@ -53,6 +53,7 @@ export function KeycloakProvider({ children }: KeycloakProviderProps) {
     initKeycloak()
 
     kcInstance.onAuthSuccess = () => {
+      console.log("[KeycloakProvider] Auth success")
       dispatch(setAuthenticated(true))
       const token = kcInstance.token
       dispatch(setToken({ token, tokenParsed: kcInstance.tokenParsed }))
@@ -77,6 +78,7 @@ export function KeycloakProvider({ children }: KeycloakProviderProps) {
     }
 
     kcInstance.onAuthLogout = () => {
+      console.log("[KeycloakProvider] Auth logout")
       dispatch(setAuthenticated(false))
     }
   }, [dispatch])

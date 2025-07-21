@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
+import { logRequest } from "@/lib/utils/request-logger"
 export const dynamic = "force-dynamic"
 const apiUrl = process.env.NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL
 const apiPrefix = process.env.NEXT_PUBLIC_API_PREFIX
 
 export async function GET(request: NextRequest) {
+    logRequest(request)
    
     const authorization = request.headers.get("authorization")
    
@@ -42,6 +44,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    logRequest(request)
     const authorization = request.headers.get("authorization")
 
     if (!authorization) {
