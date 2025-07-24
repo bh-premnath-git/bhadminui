@@ -154,6 +154,14 @@ jobs:
             Main Branch -- Failed to build or push Docker image: `${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}`
             [View GitHub Actions Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
           notification-color: FF0000
-  
-  
-
+      # Create .env.production file for Docker build
+      - name: Create .env.production
+        run: |
+          echo "PORT=5001" >> .env.production
+          echo "NEXT_PUBLIC_KEYCLOAK_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_URL }}" >> .env.production
+          echo "NEXT_PUBLIC_KEYCLOAK_REALM=${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}" >> .env.production
+          echo "NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}" >> .env.production
+          echo "NEXT_PUBLIC_UI_REDIRECT_URL=${{ secrets.NEXT_PUBLIC_UI_REDIRECT_URL }}" >> .env.production
+          echo "NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL }}" >> .env.production
+          echo "NEXT_PUBLIC_UI_APP_URL=${{ secrets.NEXT_PUBLIC_UI_APP_URL }}" >> .env.production
+          echo "NEXT_PUBLIC_API_PREFIX=${{ secrets.NEXT_PUBLIC_API_PREFIX }}" >> .env.production
