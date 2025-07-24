@@ -1,0 +1,119 @@
+name: Trivy AquaSec Scan and Notify via Email & Teams
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DEFAULT_IMAGE_TAG: "latest"
+  IMAGE_NAME: bh-admin-ui
+  REPOSITORY: "058264070106.dkr.ecr.us-east-1.amazonaws.com"
+  ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+  AWS_REGION: "us-east-1"
+
+jobs:
+  trivy_scan_all:
+    name: Trivy All Scans
+    runs-on: [self-hosted, bh]
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Trivy
+        uses: aquasecurity/setup-trivy@v0.2.3
+
+      ##############################################
+      # SAST & SCA SCAN
+      ##############################################
+      - name: Run SAST & SCA scan with Trivy
+        run: |
+          trivy fs . --scanners vuln,secret --format json --output trivy_bh_admin_ui_sast_sca_scan_report.json
+
+      - name: Convert SAST/SCA JSON report to HTML
+        run: |
+          echo "<html><body><h1>Trivy BH_ADMIN_UI SAST/SCA Vulnerability Scan Report</h1><table border='1'>" > trivy_bh_admin_ui_sast_sca_scan_report.html
+          echo "<tr><th>Target</th><th>Vulnerability ID</th><th>Severity</th><th>Description</th></tr>" >> trivy_bh_admin_ui_sast_sca_scan_report.html
+          cat trivy_bh_admin_ui_sast_sca_scan_report.json | jq -r '
+            .Results[]? | .Target as $target |
+              .Vulnerabilities[]? |
+              "<tr><td>\($target)</td><td>\(.VulnerabilityID // "N/A")</td><td>\(.Severity // "N/A")</td><td>\(.Description // "N/A")</td></tr>"
+          ' >> trivy_bh_admin_ui_sast_sca_scan_report.html
+          echo "</table></body></html>" >> trivy_bh_admin_ui_sast_sca_scan_report.html
+
+      - name: Upload SAST & SCA scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-bh-admin-ui-sast-sca-scan-report
+          path: trivy_bh_admin_ui_sast_sca_scan_report.html
+
+      ##############################################
+      # DAST SCAN
+      ##############################################
+      - name: Run DAST scan with Trivy
+        run: |
+          trivy config . --format table --output trivy_bh_admin_ui_dast_scan_report.txt
+
+      - name: Convert DAST report to HTML
+        run: |
+          echo "<html><body><h1>Trivy BH_ADMIN_UI DAST Scan Report</h1><pre>" > trivy_bh_admin_ui_dast_scan_report.html
+          cat trivy_bh_admin_ui_dast_scan_report.txt >> trivy_bh_admin_ui_dast_scan_report.html
+          echo "</pre></body></html>" >> trivy_bh_admin_ui_dast_scan_report.html
+
+      - name: Upload DAST scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-bh-admin-ui-dast-scan-report
+          path: trivy_bh_admin_ui_dast_scan_report.html
+
+      ##############################################
+      # CONTAINER IMAGE SCAN
+      ##############################################
+      - name: Install AWS CLI v2
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+          aws --version
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REPOSITORY
+
+      - name: Pull Docker image
+        run: |
+          docker pull $REPOSITORY/$IMAGE_NAME:$DEFAULT_IMAGE_TAG
+
+      - name: Run container scan with Trivy
+        run: |
+          trivy image $REPOSITORY/$IMAGE_NAME:$DEFAULT_IMAGE_TAG --format json --output trivy_bh_admin_ui_container_scan_report.json
+
+      - name: Convert Container JSON report to HTML
+        run: |
+          echo "<html><body><h1>Trivy BH_ADMIN_UI Container Vulnerability Scan Report</h1><table border='1'>" > trivy_bh_admin_ui_container_scan_report.html
+          echo "<tr><th>Target</th><th>Vulnerability ID</th><th>Severity</th><th>Description</th></tr>" >> trivy_bh_admin_ui_container_scan_report.html
+          cat trivy_bh_admin_ui_container_scan_report.json | jq -r '
+            .Results[]? | .Target as $target |
+              .Vulnerabilities[]? |
+              "<tr><td>\($target)</td><td>\(.VulnerabilityID // "N/A")</td><td>\(.Severity // "N/A")</td><td>\(.Description // "N/A")</td></tr>"
+          ' >> trivy_bh_admin_ui_container_scan_report.html
+          echo "</table></body></html>" >> trivy_bh_admin_ui_container_scan_report.html
+
+      - name: Upload container scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-bh-admin-ui-container-scan-report
+          path: trivy_bh_admin_ui_container_scan_report.html
