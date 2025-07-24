@@ -2,6 +2,7 @@ node_modules
 .next
 out
 .env*
+!.env.production
 .git
 .vscode
 .DS_Store
