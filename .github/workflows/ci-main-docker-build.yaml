@@ -1,6 +1,6 @@
 # This workflow will build Docker Image and publish it to AWS ECR & Google Artifact Registry
 
-name: Main -- Build Docker Image and push to repo
+name: Main -- Build Docker Image and push to GAR
 
 on:
   pull_request:
