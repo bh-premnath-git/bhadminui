@@ -56,14 +56,22 @@ jobs:
       - name: Verify Keycloak secrets exist
         run: |
           missing=0
-          for var in NEXT_PUBLIC_KEYCLOAK_URL NEXT_PUBLIC_KEYCLOAK_REALM \
-                    NEXT_PUBLIC_KEYCLOAK_CLIENT_ID NEXT_PUBLIC_UI_REDIRECT_URL
-          do
-            if [ -z "${{ secrets[$var] }}" ]; then
-              echo "❌ Secret $var is undefined"
-              missing=1
-            fi
-          done
+          if [ -z "${{ secrets.NEXT_PUBLIC_KEYCLOAK_URL }}" ]; then
+            echo "❌ Secret NEXT_PUBLIC_KEYCLOAK_URL is undefined"
+            missing=1
+          fi
+          if [ -z "${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}" ]; then
+            echo "❌ Secret NEXT_PUBLIC_KEYCLOAK_REALM is undefined"
+            missing=1
+          fi
+          if [ -z "${{ secrets.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}" ]; then
+            echo "❌ Secret NEXT_PUBLIC_KEYCLOAK_CLIENT_ID is undefined"
+            missing=1
+          fi
+          if [ -z "${{ secrets.NEXT_PUBLIC_UI_REDIRECT_URL }}" ]; then
+            echo "❌ Secret NEXT_PUBLIC_UI_REDIRECT_URL is undefined"
+            missing=1
+          fi
           if [ "$missing" = 1 ]; then
             echo "One or more Keycloak secrets are missing – aborting." >&2
             exit 1
@@ -186,4 +194,3 @@ jobs:
             Main Branch -- Failed to build or push Docker image: `${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}`
             [View GitHub Actions Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
           notification-color: FF0000
-      
