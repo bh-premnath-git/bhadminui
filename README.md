@@ -64,7 +64,8 @@ NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=bighammer-admin
 NEXT_PUBLIC_UI_REDIRECT_URL=http://localhost:5001
 NEXT_PUBLIC_UI_APP_URL=http://localhost:5000
 NEXT_PUBLIC_API_PREFIX=/api/v1/
-NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=http://localhost:8005```
+NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=http://localhost:8005
+NODE_ENV=development```
 
 ### Docker Setup
 

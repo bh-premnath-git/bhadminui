@@ -51,47 +51,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       
       - name: Log in to Amazon ECR
-        run: aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.REPOSITORY }}
-
-      - name: Verify Keycloak secrets exist
-        run: |
-          missing=0
-          if [ -z "${{ secrets.NEXT_PUBLIC_KEYCLOAK_URL }}" ]; then
-            echo "❌ Secret NEXT_PUBLIC_KEYCLOAK_URL is undefined"
-            missing=1
-          fi
-          if [ -z "${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}" ]; then
-            echo "❌ Secret NEXT_PUBLIC_KEYCLOAK_REALM is undefined"
-            missing=1
-          fi
-          if [ -z "${{ secrets.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}" ]; then
-            echo "❌ Secret NEXT_PUBLIC_KEYCLOAK_CLIENT_ID is undefined"
-            missing=1
-          fi
-          if [ -z "${{ secrets.NEXT_PUBLIC_UI_REDIRECT_URL }}" ]; then
-            echo "❌ Secret NEXT_PUBLIC_UI_REDIRECT_URL is undefined"
-            missing=1
-          fi
-          if [ "$missing" = 1 ]; then
-            echo "One or more Keycloak secrets are missing – aborting." >&2
-            exit 1
-          fi
-
-      - name: Create & show .env.production
-        run: |
-          {
-            echo "PORT=5001"
-            echo "NEXT_PUBLIC_KEYCLOAK_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_URL }}"
-            echo "NEXT_PUBLIC_KEYCLOAK_REALM=${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}"
-            echo "NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}"
-            echo "NEXT_PUBLIC_UI_REDIRECT_URL=${{ secrets.NEXT_PUBLIC_UI_REDIRECT_URL }}"
-            echo "NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL }}"
-            echo "NEXT_PUBLIC_UI_APP_URL=${{ secrets.NEXT_PUBLIC_UI_APP_URL }}"
-            echo "NEXT_PUBLIC_API_PREFIX=${{ secrets.NEXT_PUBLIC_API_PREFIX }}"
-          } > .env.production
-
-          echo '── .env.production going into the image (secrets masked) ──'
-          sed -e 's/=.*/=*****/' .env.production    
+        run: aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.REPOSITORY }}   
 
       - name: Extract Branch Name
         run: |-
@@ -115,6 +75,15 @@ jobs:
           echo "Image Tag is: $IMAGE_TAG"
           echo "Image Name is: $IMAGE_NAME"
           docker build --no-cache \
+            --build-arg PORT=5001 \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_URL=http://localhost:8080 \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=master \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=bighammer-admin \
+            --build-arg NEXT_PUBLIC_UI_REDIRECT_URL=http://localhost:5001 \
+            --build-arg NEXT_PUBLIC_UI_APP_URL=http://localhost:5000 \
+            --build-arg NEXT_PUBLIC_API_PREFIX=/api/v1/ \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=http://localhost:8005 \
+            --build-arg NODE_ENV=development \
             --tag "$PR_GAR_URL/$IMAGE_NAME:$IMAGE_TAG" .
       
       - name: Pull Request -- Push Docker image
@@ -136,6 +105,15 @@ jobs:
         if: github.event_name == 'push'
         run: |-        
           docker build --no-cache \
+            --build-arg PORT=5001 \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_URL=http://localhost:8080 \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=master \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=bighammer-admin \
+            --build-arg NEXT_PUBLIC_UI_REDIRECT_URL=http://localhost:5001 \
+            --build-arg NEXT_PUBLIC_UI_APP_URL=http://localhost:5000 \
+            --build-arg NEXT_PUBLIC_API_PREFIX=/api/v1/ \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=http://localhost:8005 \
+            --build-arg NODE_ENV=development \
             --tag "$MAIN_GAR_URL/$IMAGE_NAME:$IMAGE_TAG" \
             --tag "$MAIN_GAR_URL/$IMAGE_NAME:$DEFAULT_IMAGE_TAG" \
             --tag "$MAIN_GAR_URL/$IMAGE_NAME:$GIT_HASH" .

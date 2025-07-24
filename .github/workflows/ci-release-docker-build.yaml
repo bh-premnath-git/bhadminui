@@ -75,6 +75,15 @@ jobs:
           echo "Image Tag is: $IMAGE_TAG"
           echo "Image Name is: $IMAGE_NAME"
           docker build --no-cache \
+            --build-arg PORT=5001 \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_URL=http://localhost:8080 \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=master \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=bighammer-admin \
+            --build-arg NEXT_PUBLIC_UI_REDIRECT_URL=http://localhost:5001 \
+            --build-arg NEXT_PUBLIC_UI_APP_URL=http://localhost:5000 \
+            --build-arg NEXT_PUBLIC_API_PREFIX=/api/v1/ \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=http://localhost:8005 \
+            --build-arg NODE_ENV=production \
             --tag "$PR_GAR_URL/$IMAGE_NAME:$IMAGE_TAG" .
       
       - name: Pull Request -- Push Docker image
@@ -96,6 +105,15 @@ jobs:
         if: github.event_name == 'push'
         run: |-        
           docker build --no-cache \
+            --build-arg PORT=5001 \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_URL=http://localhost:8080 \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_REALM=master \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=bighammer-admin \
+            --build-arg NEXT_PUBLIC_UI_REDIRECT_URL=http://localhost:5001 \
+            --build-arg NEXT_PUBLIC_UI_APP_URL=http://localhost:5000 \
+            --build-arg NEXT_PUBLIC_API_PREFIX=/api/v1/ \
+            --build-arg NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=http://localhost:8005 \
+            --build-arg NODE_ENV=production \
             --tag "$RELEASE_GAR_URL/$IMAGE_NAME:$IMAGE_TAG" \
             --tag "$RELEASE_GAR_URL/$IMAGE_NAME:$DEFAULT_IMAGE_TAG" \
             --tag "$RELEASE_GAR_URL/$IMAGE_NAME:$GIT_HASH" .
