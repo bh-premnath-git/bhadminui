@@ -53,17 +53,37 @@ jobs:
       - name: Log in to Amazon ECR
         run: aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.REPOSITORY }}
 
-      # Create .env.production file for Docker build
-      - name: Create .env.production
+      - name: Verify Keycloak secrets exist
         run: |
-          echo "PORT=5001" >> .env.production
-          echo "NEXT_PUBLIC_KEYCLOAK_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_URL }}" >> .env.production
-          echo "NEXT_PUBLIC_KEYCLOAK_REALM=${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}" >> .env.production
-          echo "NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}" >> .env.production
-          echo "NEXT_PUBLIC_UI_REDIRECT_URL=${{ secrets.NEXT_PUBLIC_UI_REDIRECT_URL }}" >> .env.production
-          echo "NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL }}" >> .env.production
-          echo "NEXT_PUBLIC_UI_APP_URL=${{ secrets.NEXT_PUBLIC_UI_APP_URL }}" >> .env.production
-          echo "NEXT_PUBLIC_API_PREFIX=${{ secrets.NEXT_PUBLIC_API_PREFIX }}" >> .env.production      
+          missing=0
+          for var in NEXT_PUBLIC_KEYCLOAK_URL NEXT_PUBLIC_KEYCLOAK_REALM \
+                    NEXT_PUBLIC_KEYCLOAK_CLIENT_ID NEXT_PUBLIC_UI_REDIRECT_URL
+          do
+            if [ -z "${{ secrets[$var] }}" ]; then
+              echo "❌ Secret $var is undefined"
+              missing=1
+            fi
+          done
+          if [ "$missing" = 1 ]; then
+            echo "One or more Keycloak secrets are missing – aborting." >&2
+            exit 1
+          fi
+
+      - name: Create & show .env.production
+        run: |
+          {
+            echo "PORT=5001"
+            echo "NEXT_PUBLIC_KEYCLOAK_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_URL }}"
+            echo "NEXT_PUBLIC_KEYCLOAK_REALM=${{ secrets.NEXT_PUBLIC_KEYCLOAK_REALM }}"
+            echo "NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${{ secrets.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID }}"
+            echo "NEXT_PUBLIC_UI_REDIRECT_URL=${{ secrets.NEXT_PUBLIC_UI_REDIRECT_URL }}"
+            echo "NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=${{ secrets.NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL }}"
+            echo "NEXT_PUBLIC_UI_APP_URL=${{ secrets.NEXT_PUBLIC_UI_APP_URL }}"
+            echo "NEXT_PUBLIC_API_PREFIX=${{ secrets.NEXT_PUBLIC_API_PREFIX }}"
+          } > .env.production
+
+          echo '── .env.production going into the image (secrets masked) ──'
+          sed -e 's/=.*/=*****/' .env.production    
 
       - name: Extract Branch Name
         run: |-
