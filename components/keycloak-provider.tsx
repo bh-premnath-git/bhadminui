@@ -1,89 +1,97 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from "react"
-import { useDispatch } from "react-redux"
-import getKeycloakInstance from "@/lib/services/keycloak/keycloak-service"
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import getKeycloakInstance from '@/lib/services/keycloak/keycloak-service';
 import {
   setKeycloak,
   setAuthenticated,
   setToken,
   generateToken,
-} from "@/lib/features/auth/auth-slice"
-import type { AppDispatch } from "@/lib/store"
-import { LazyLoading } from "./LazyLoading"
+} from '@/lib/features/auth/auth-slice';
+import type { AppDispatch } from '@/lib/store';
+import { LazyLoading } from './LazyLoading';
 
-interface KeycloakProviderProps {
-  children: React.ReactNode
+interface Props {
+  children: React.ReactNode;
 }
 
-export function KeycloakProvider({ children }: KeycloakProviderProps) {
-  const dispatch = useDispatch<AppDispatch>()
-  const [isLoading, setIsLoading] = useState(true)
+export function KeycloakProvider({ children }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
+  const [bootDone, setBootDone] = useState(false);
 
   useEffect(() => {
-    const kcInstance = getKeycloakInstance()
+    /** ------------------------------------------------------------------
+     *  1.  Obtain (or create) the singleton instance
+     * ------------------------------------------------------------------ */
+    const kc = getKeycloakInstance();
+    dispatch(setKeycloak(kc));
 
-    dispatch(setKeycloak(kcInstance))
-
-    const initKeycloak = async () => {
-      try {
-        const auth = await kcInstance.init({ onLoad: "login-required" })
-        if (!auth) {
-          // If not authenticated, trigger the login flow and keep loading state
-          await kcInstance.login()
-          return
-        }
-
-        // Authenticated
-        dispatch(setAuthenticated(true))
-        const token = kcInstance.token
-        dispatch(setToken({ token, tokenParsed: kcInstance.tokenParsed }))
-        await dispatch(generateToken(token)).unwrap()
-      } catch (error) {
-        console.error("Keycloak init failed:", error)
-        dispatch(setAuthenticated(false))
-      } finally {
-        // Only stop loading if user is authenticated; otherwise the login redirect should occur
-        if (kcInstance.authenticated) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    initKeycloak()
-
-    kcInstance.onAuthSuccess = () => {
-      dispatch(setAuthenticated(true))
-      const token = kcInstance.token
-      dispatch(setToken({ token, tokenParsed: kcInstance.tokenParsed }))
-      dispatch(generateToken(token))
-      setIsLoading(false)
-    }
-
-    kcInstance.onAuthError = (errorData) => {
-      console.error("Auth Error:", errorData)
-      dispatch(setAuthenticated(false))
-    }
-
-    kcInstance.onAuthRefreshSuccess = () => {
+    /** ------------------------------------------------------------------
+     *  2.  Helper that pushes tokens into Redux
+     * ------------------------------------------------------------------ */
+    const syncTokens = () =>
       dispatch(
-        setToken({ token: kcInstance.token, tokenParsed: kcInstance.tokenParsed })
-      )
-    }
+        setToken({ token: kc.token, tokenParsed: kc.tokenParsed }),
+      );
 
-    kcInstance.onAuthRefreshError = () => {
-      console.error("Token Refresh Error")
-      dispatch(setAuthenticated(false))
-    }
+    /** ------------------------------------------------------------------
+     *  3.  Init
+     *      - Disable the iframe when 3-rd-party cookies are blocked
+     *      - PKCE S256 is mandatory for public SPA clients as of Keycloak 24
+     * ------------------------------------------------------------------ */
+    kc.init({
+      onLoad: 'login-required',
+      checkLoginIframe: false,              // fixes Safari / Brave
+      pkceMethod: 'S256',
+      redirectUri: window.location.origin,  // avoid stale .env
+    })
+      .then(async (authenticated) => {
+        if (!authenticated) {
+          // We’re still unauthenticated – send user to IdP
+          return kc.login({ redirectUri: window.location.href });
+        }
 
-    kcInstance.onAuthLogout = () => {
-      dispatch(setAuthenticated(false))
-    }
-  }, [dispatch])
+        // Auth OK
+        dispatch(setAuthenticated(true));
+        syncTokens();
+        await dispatch(generateToken(kc.token!)).unwrap();
+      })
+      .catch((err) => {
+        console.error('[Keycloak] init error →', err);
+        dispatch(setAuthenticated(false));
+      })
+      .finally(() => setBootDone(true));
 
-  if (isLoading) {
-    return <LazyLoading fullScreen={true} message="Loading..." />
+    /** ------------------------------------------------------------------
+     *  4.  Keycloak event hooks
+     * ------------------------------------------------------------------ */
+    kc.onAuthSuccess = () => {
+      dispatch(setAuthenticated(true));
+      syncTokens();
+    };
+
+    kc.onAuthError = (err) => {
+      console.error('[Keycloak] auth error', err);
+      dispatch(setAuthenticated(false));
+    };
+
+    kc.onAuthRefreshSuccess = syncTokens;
+
+    kc.onAuthLogout = () => {
+      dispatch(setAuthenticated(false));
+    };
+
+    kc.onTokenExpired = () => {
+      kc.updateToken(30).catch(() => kc.login());
+    };
+  }, [dispatch]);
+
+  /* --------------------------------------------------------------------- */
+  /*  Render                                                              */
+  /* --------------------------------------------------------------------- */
+  if (!bootDone) {
+    return <LazyLoading fullScreen message="Loading…" />;
   }
-
-  return <>{children}</>
+  return <>{children}</>;
 }
