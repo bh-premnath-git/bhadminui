@@ -58,7 +58,7 @@ export function KeycloakProvider({ children }: Props) {
         await dispatch(generateToken(kc.token!)).unwrap();
       })
       .catch((err) => {
-        console.error('[Keycloak] init error →', err);
+        console.error('[Keycloak] init error  → →', err);
         dispatch(setAuthenticated(false));
       })
       .finally(() => setBootDone(true));
