@@ -54,7 +54,7 @@ export const tenantApiSlice = apiService.injectEndpoints({
       queryFn: async () => ({ error: { status: 501, data: "Not Implemented" } }),
       invalidatesTags: (_result, _error, { id }) => [{ type: "Tenant", id }, { type: "Tenant", id: "LIST" }],
     }),
-    deleteTenant: builder.mutation<{ success: boolean; id: string }, string>({
+    deleteTenant: builder.mutation<{ success: boolean; id: number }, number>({
       queryFn: async () => ({ error: { status: 501, data: "Not Implemented" } }),
       invalidatesTags: (_result, _error, id) => [{ type: "Tenant", id }, { type: "Tenant", id: "LIST" }],
     }),

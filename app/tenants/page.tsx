@@ -39,15 +39,15 @@ export default function TenantsPage() {
     setFilters({ ...filters, tenant_status: status === "all" ? undefined : (status as any) })
   }
 
-  const handleTenantClick = (tenantId: string) => {
+  const handleTenantClick = (tenantId: number) => {
     router.push(`/tenants/${tenantId}`)
   }
 
-  const handleEdit = (tenantId: string) => {
+  const handleEdit = (tenantId: number) => {
     router.push(`/tenants/${tenantId}/edit`)
   }
 
-  const handleDelete = async (tenantId: string) => {
+  const handleDelete = async (tenantId: number) => {
     try {
       await deleteTenant(tenantId).unwrap()
       // Optionally show a success toast
@@ -164,8 +164,8 @@ export default function TenantsPage() {
       {/* Tenants Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {tenantsResponse?.data.map((tenant) => (
-          <Card key={tenant.id} className="group hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-800/50 h-full flex flex-col cursor-pointer"
-            onClick={() => handleTenantClick(tenant.id)}
+          <Card key={tenant.tenant_id} className="group hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-800/50 h-full flex flex-col cursor-pointer"
+            onClick={() => handleTenantClick(tenant.tenant_id)}
           >
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start mb-2">
@@ -199,13 +199,13 @@ export default function TenantsPage() {
                         className="cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleTenantClick(tenant.id)
+                          handleTenantClick(tenant.tenant_id)
                         }}
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEdit(tenant.id)}>
+                      <DropdownMenuItem onClick={() => handleEdit(tenant.tenant_id)}>
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Tenant
                       </DropdownMenuItem>
@@ -213,7 +213,7 @@ export default function TenantsPage() {
                         className="cursor-pointer text-red-600 focus:text-red-600"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDelete(tenant.id)
+                          handleDelete(tenant.tenant_id)
                         }}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />

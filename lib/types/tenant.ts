@@ -7,6 +7,7 @@ export interface Tag {
 
 export interface Tenant extends BaseEntity {
   tenant_name: string
+  tenant_id: number
   tenant_key: string
   tenant_description: string
   tenant_logo_path: string
