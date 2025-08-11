@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   nextjs-app:
     build:
@@ -9,15 +11,15 @@ services:
         - NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${NEXT_PUBLIC_KEYCLOAK_CLIENT_ID}
         - NEXT_PUBLIC_UI_REDIRECT_URL=${NEXT_PUBLIC_UI_REDIRECT_URL}
         - NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=${NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL}
+    env_file:
+      - ./.env
+    volumes:
+      - ./ssl:/certs:ro
     ports:
       - "5001:5001"
-    env_file:
-      - .env
-    volumes:
-      - /app/node_modules
+    restart: unless-stopped
     networks:
       - shared_network
-    restart: unless-stopped
 
 networks:
   shared_network:
