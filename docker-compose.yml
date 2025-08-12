@@ -1,5 +1,4 @@
 version: "3.8"
-
 services:
   nextjs-app:
     build:
@@ -14,7 +13,7 @@ services:
     env_file:
       - ./.env
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: "5001"
       ENABLE_HTTPS: "false"
     volumes:
