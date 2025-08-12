@@ -1,18 +1,6 @@
 # --- Build Stage ---
 FROM node:current-alpine3.22 AS builder
 WORKDIR /app
-
-ARG NEXT_PUBLIC_KEYCLOAK_URL
-ARG NEXT_PUBLIC_KEYCLOAK_REALM
-ARG NEXT_PUBLIC_KEYCLOAK_CLIENT_ID
-ARG NEXT_PUBLIC_UI_REDIRECT_URL
-ARG NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL
-ENV NEXT_PUBLIC_KEYCLOAK_URL=$NEXT_PUBLIC_KEYCLOAK_URL \
-    NEXT_PUBLIC_KEYCLOAK_REALM=$NEXT_PUBLIC_KEYCLOAK_REALM \
-    NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=$NEXT_PUBLIC_KEYCLOAK_CLIENT_ID \
-    NEXT_PUBLIC_UI_REDIRECT_URL=$NEXT_PUBLIC_UI_REDIRECT_URL \
-    NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=$NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL
-
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
@@ -28,7 +16,16 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/app ./app
+COPY --from=builder /app/components ./components
+COPY --from=builder /app/hooks ./hooks
+COPY --from=builder /app/lib ./lib
+COPY --from=builder /app/styles ./styles
 COPY --from=builder /app/server.js ./server.js
+COPY --from=builder /app/next.config.mjs ./next.config.mjs
+COPY --from=builder /app/components.json ./components.json
+COPY --from=builder /app/tailwind.config.ts ./tailwind.config.ts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 EXPOSE 5001
 CMD ["node", "server.js"]

@@ -197,28 +197,6 @@ export default function TenantDetailPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-green-600" />
-                <CardTitle>Contact Information</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Email Address</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm">{currentTenant.created_by}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Tags */}
           <Card>
             <CardHeader>

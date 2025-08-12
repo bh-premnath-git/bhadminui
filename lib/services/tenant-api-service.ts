@@ -23,7 +23,7 @@ export const tenantApiSlice = apiService.injectEndpoints({
     getTenantByName: builder.query<Tenant, string>({
       query: (name) => ({
         url: "tenants",
-        params: { id: name, limit: 1 },
+        params: { tenant_key: name, limit: 1 },
       }),
       transformResponse: (response: PaginatedResponse<Tenant>) => {
         if (response.data && response.data.length > 0) {

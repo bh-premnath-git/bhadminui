@@ -21,29 +21,26 @@ export default function HomePage() {
       
       // Check if the date is valid
       if (isNaN(created.getTime())) {
-        console.warn(`Invalid date format for tenant ${t.id}: ${t.created_at}`)
+        console.warn(`Invalid date format for tenant ${t.tenant_id}: ${t.created_at}`)
         return false
       }
       
       // Compare using UTC to avoid timezone issues
       const createdUTC = new Date(created.getUTCFullYear(), created.getUTCMonth(), created.getUTCDate())
       const nowUTC = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-      
-      console.log(`Tenant ${t.id}: Created ${createdUTC.toISOString().split('T')[0]}, Now ${nowUTC.toISOString().split('T')[0]}`)
-      
       return (
         createdUTC.getMonth() === nowUTC.getMonth() &&
         createdUTC.getFullYear() === nowUTC.getFullYear()
       )
     } catch (error) {
-      console.warn(`Error parsing date for tenant ${t.id}:`, error)
+      console.warn(`Error parsing date for tenant ${t.tenant_id}:`, error)
       return false
     }
   }).length
 
   const activities: Activity[] = useMemo(() => {
     const tenantActs = tenants.map((t) => ({
-      id: `tenant-${t.id}`,
+      id: `tenant-${t.tenant_id}`,
       type: "tenant_created",
       title: `Tenant created: ${t.tenant_name}`,
       description: t.tenant_description,
@@ -66,7 +63,6 @@ export default function HomePage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <RecentActivities activities={activities} limit={3}/>
-
           </div>
           <div>
             <Card>
