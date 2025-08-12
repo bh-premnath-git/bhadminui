@@ -6,12 +6,12 @@ const apiPrefix = process.env.NEXT_PUBLIC_API_PREFIX
 
 export async function GET(request: NextRequest) {
     logRequest(request)
-   
+
     const authorization = request.headers.get("authorization")
-   
+
     if (!authorization) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }    
+    }
 
     if (!apiUrl) {
         console.log("ERROR: API URL is not configured")
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const backendUrl = new URL(`${apiUrl}${apiPrefix}bh-tenant/list/`)
     backendUrl.search = searchParams.toString()
-    
+
     try {
         const response = await fetch(backendUrl.toString(), {
             method: "GET",
@@ -83,6 +83,42 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(data)
     } catch (error) {
         console.error("Tenant creation error:", error)
+        return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 })
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    logRequest(request)
+    const authorization = request.headers.get("authorization")
+
+    if (!authorization) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+
+    try {
+        const { searchParams } = new URL(request.url)
+        const tenant_id = searchParams.get("tenant_id")
+
+        if (!tenant_id) {
+            return NextResponse.json({ error: "Tenant ID is required" }, { status: 400 })
+        }
+        const response = await fetch(`${apiUrl}${apiPrefix}bh-tenant/${tenant_id}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: authorization,
+            },
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+            return NextResponse.json({ error: data }, { status: response.status })
+        }
+
+        return NextResponse.json(data)
+    } catch (error) {
+        console.error("Delete tenant error:", error)
         return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 })
     }
 }

@@ -1,16 +1,14 @@
 "use client"
-
+import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useGetTenantByNameQuery } from "@/lib/services/tenant-api-service"
+import { useGetTenantByNameQuery, useDeleteTenantMutation } from "@/lib/services/tenant-api-service"
 import {
   ArrowLeft,
   Building2,
-  Mail,
-  User,
   Tag,
   Calendar,
   Edit,
@@ -21,15 +19,30 @@ import {
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function TenantDetailPage() {
   const params = useParams()
   const router = useRouter()
   const tenantName = params.id as string
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
+  const { toast } = useToast()
 
   const { data: tenantResponse, isLoading: loading, error } = useGetTenantByNameQuery(tenantName, {
     skip: !tenantName,
   })
+  const [deleteTenant, { isLoading: isDeleting }] = useDeleteTenantMutation()
 
   const currentTenant = tenantResponse
 
@@ -39,12 +52,27 @@ export default function TenantDetailPage() {
 
   const handleEdit = () => {
     // Navigate to edit page or open edit modal
-    console.log("Edit tenant:", currentTenant?.id)
+    console.log("Edit tenant:", currentTenant?.tenant_id)
   }
 
-  const handleDelete = () => {
-    // Show delete confirmation
-    console.log("Delete tenant:", currentTenant?.id)
+  const handleDelete = async () => {
+    if (!currentTenant?.tenant_id) return
+    try {
+      await deleteTenant(currentTenant.tenant_id).unwrap()
+      toast({
+        title: "Tenant deleted",
+        description: `${currentTenant.tenant_name} has been removed successfully.`,
+        variant: "default",
+      })
+      router.push("/tenants")
+    } catch (error) {
+      console.error("Error deleting tenant:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete tenant. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   // Function to extract tenant identifier from login URL and construct admin URL
@@ -142,19 +170,42 @@ export default function TenantDetailPage() {
           </TooltipProvider>
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={handleDelete}
-                  variant="outline"
-                  size="icon"
-                  className="text-red-600 hover:text-red-700 bg-transparent"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete Tenant</p>
-              </TooltipContent>
+              <AlertDialog>
+                <TooltipTrigger asChild>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={isDeleting}
+                      className="text-red-600 hover:text-red-700 bg-transparent"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                </TooltipTrigger>
+
+                <TooltipContent>
+                  <p>Delete Tenant</p>
+                </TooltipContent>
+
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete <strong>{currentTenant.tenant_name}</strong>? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </Tooltip>
           </TooltipProvider>
         </div>
@@ -192,7 +243,7 @@ export default function TenantDetailPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Tenant ID</label>
-                  <p className="text-sm font-mono bg-muted px-2 py-1 rounded mt-1">{currentTenant.id}</p>
+                  <p className="text-sm font-mono bg-muted px-2 py-1 rounded mt-1">{currentTenant.tenant_id}</p>
                 </div>
               </div>
             </CardContent>
@@ -250,15 +301,15 @@ export default function TenantDetailPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Login URL</label>
-                  <a 
-                    href={getAdminUrl(currentTenant.login_url ?? "")} 
-                    target="_blank" 
+                  <a
+                    href={getAdminUrl(currentTenant.login_url ?? "")}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-mono bg-muted px-2 py-1 rounded mt-1 block hover:bg-muted/80 transition-colors text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     Admin URL
                   </a>
-                </div> 
+                </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

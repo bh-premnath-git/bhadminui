@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { ReduxProvider } from "@/components/providers/redux-provider"
 import { KeycloakProvider } from "@/components/keycloak-provider"
 import { AdminLayout } from "@/components/admin-layout"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -37,6 +38,7 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <AdminLayout>{children}</AdminLayout>
+               <Toaster />
             </ThemeProvider>
           </KeycloakProvider>
         </ReduxProvider>
