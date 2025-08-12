@@ -38,7 +38,7 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <AdminLayout>{children}</AdminLayout>
-               <Toaster />
+              <Toaster /> {/* persists across route changes */}
             </ThemeProvider>
           </KeycloakProvider>
         </ReduxProvider>

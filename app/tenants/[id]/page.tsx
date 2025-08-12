@@ -1,5 +1,4 @@
 "use client"
-import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -36,7 +35,6 @@ export default function TenantDetailPage() {
   const params = useParams()
   const router = useRouter()
   const tenantName = params.id as string
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const { toast } = useToast()
 
   const { data: tenantResponse, isLoading: loading, error } = useGetTenantByNameQuery(tenantName, {
@@ -62,9 +60,8 @@ export default function TenantDetailPage() {
       toast({
         title: "Tenant deleted",
         description: `${currentTenant.tenant_name} has been removed successfully.`,
-        variant: "default",
       })
-      router.push("/tenants")
+      setTimeout(() => router.push("/tenants"), 50)
     } catch (error) {
       console.error("Error deleting tenant:", error)
       toast({
@@ -168,11 +165,11 @@ export default function TenantDetailPage() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <AlertDialog>
-                <TooltipTrigger asChild>
-                  <AlertDialogTrigger asChild>
+          <AlertDialog>
+            <TooltipProvider>
+              <Tooltip>
+                <AlertDialogTrigger asChild>
+                  <TooltipTrigger asChild>
                     <Button
                       variant="outline"
                       size="icon"
@@ -181,33 +178,31 @@ export default function TenantDetailPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </AlertDialogTrigger>
-                </TooltipTrigger>
-
+                  </TooltipTrigger>
+                </AlertDialogTrigger>
                 <TooltipContent>
                   <p>Delete Tenant</p>
                 </TooltipContent>
-
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete <strong>{currentTenant.tenant_name}</strong>? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </Tooltip>
-          </TooltipProvider>
+              </Tooltip>
+            </TooltipProvider>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete <strong>{currentTenant.tenant_name}</strong>? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
@@ -374,14 +369,32 @@ export default function TenantDetailPage() {
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Tenant
               </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-red-600 hover:text-red-700 bg-transparent"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Tenant
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-red-600 hover:text-red-700 bg-transparent"
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Tenant
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete <strong>{currentTenant.tenant_name}</strong>? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>
