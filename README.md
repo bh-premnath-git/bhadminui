@@ -89,3 +89,5 @@ The application will be available at [http://localhost:5001](http://localhost:50
 - **`/public`:** Stores static assets like images and fonts.
 - **`/styles`:** Includes global CSS styles.
 
+serverjs
+
