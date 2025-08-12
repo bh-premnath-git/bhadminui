@@ -3,8 +3,8 @@ FROM node:current-alpine3.22 AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-RUN npm run build
 COPY . .
+RUN npm run build
 
 # --- Runtime Stage ---
 FROM node:current-alpine3.22 AS runner
