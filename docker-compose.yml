@@ -1,6 +1,8 @@
 version: "3.8"
 services:
   nextjs-app:
+    env_file:
+      - ./.env
     build:
       context: .
       dockerfile: Dockerfile
@@ -10,8 +12,6 @@ services:
         - NEXT_PUBLIC_KEYCLOAK_CLIENT_ID=${NEXT_PUBLIC_KEYCLOAK_CLIENT_ID}
         - NEXT_PUBLIC_UI_REDIRECT_URL=${NEXT_PUBLIC_UI_REDIRECT_URL}
         - NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL=${NEXT_PUBLIC_KEYCLOAK_API_REMOTE_URL}
-    env_file:
-      - ./.env
     environment:
       NODE_ENV: development
       PORT: "5001"

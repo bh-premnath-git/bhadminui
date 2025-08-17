@@ -16,8 +16,8 @@ app.prepare()
   .then(() => {
     if (!dev && ENABLE_HTTPS) {
       const sslOptions = {
-        key: fs.readFileSync(process.env.SSL_KEY_PATH  || path.join(__dirname, 'ssl', 'key.pem')),
-        cert: fs.readFileSync(process.env.SSL_CERT_PATH || path.join(__dirname, 'ssl', 'cert.pem')),
+        key: fs.readFileSync(path.join(__dirname, 'ssl', 'key.pem')),
+        cert: fs.readFileSync(path.join(__dirname, 'ssl', 'cert.pem')),
         ca: process.env.SSL_CA_PATH ? fs.readFileSync(process.env.SSL_CA_PATH) : undefined,
       };
       https.createServer(sslOptions, (req, res) => handle(req, res))

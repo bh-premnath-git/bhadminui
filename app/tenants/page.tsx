@@ -9,8 +9,19 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useGetTenantsQuery, useDeleteTenantMutation } from "@/lib/services/tenant-api-service"
-import { Search, Building2, Tag, MoreHorizontal, Edit, Trash2, UserPlus } from "lucide-react"
+import { Search, Building2, Tag, MoreHorizontal, Edit, Trash2, UserPlus, ExternalLink } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/components/ui/use-toast"
 import { TenantCreationModal } from "@/components/tenant-creation-modal"
 import type { TenantFilters } from "@/lib/types/tenant"
 
@@ -21,6 +32,8 @@ export default function TenantsPage() {
   const [filters, setFilters] = useState<TenantFilters>({})
   const [offset, setOffset] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [tenantToDelete, setTenantToDelete] = useState<{ tenantId: number; tenantName: string } | null>(null)
 
   const { data: tenantsResponse, isLoading: loading, error } = useGetTenantsQuery({
     ...filters,
@@ -28,6 +41,7 @@ export default function TenantsPage() {
     offset,
   })
   const [deleteTenant] = useDeleteTenantMutation()
+  const { toast } = useToast()
 
   const handleSearchChange = (search: string) => {
     setOffset(0)
@@ -47,13 +61,23 @@ export default function TenantsPage() {
     router.push(`/tenants/${tenantKey}/edit`)
   }
 
-  const handleDelete = async (tenantId: number) => {
+  const handleDelete = async () => {
+    if (!tenantToDelete) return
     try {
-      await deleteTenant(tenantId).unwrap()
-      // Optionally show a success toast
+      await deleteTenant(tenantToDelete.tenantId).unwrap()
+      toast({
+        title: "Tenant deleted",
+        description: `${tenantToDelete.tenantName} has been removed successfully.`,
+      })
+      setDeleteDialogOpen(false)
+      setTenantToDelete(null)
     } catch (err) {
       console.error("Failed to delete the tenant:", err)
-      // Optionally show an error toast
+      toast({
+        title: "Error",
+        description: "Failed to delete tenant. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -212,10 +236,22 @@ export default function TenantsPage() {
                         Edit Tenant
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className="cursor-pointer text-red-600 focus:text-red-600"
+                        className="cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDelete(tenant.tenant_id)
+                          window.open(tenant.login_url, '_blank', 'noopener,noreferrer')
+                        }}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Open Tenant
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="cursor-pointer text-red-600 focus:text-red-600"
+                        onSelect={(e) => e.preventDefault()}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setTenantToDelete({ tenantId: tenant.tenant_id, tenantName: tenant.tenant_name })
+                          setDeleteDialogOpen(true)
                         }}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -315,6 +351,23 @@ export default function TenantsPage() {
       )}
 
       <TenantCreationModal open={isModalOpen} onOpenChange={() => setIsModalOpen(false)} />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{tenantToDelete?.tenantName}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
